@@ -12,6 +12,7 @@ import { tssColor, sportColor, formColor, getFormLabel } from "@/lib/design";
 import type { Profile, Activity, DailyMetrics, TrainingMetrics } from "@/lib/types";
 
 // ─── GREEK GEOMETRY ICONS ─────────────────────────────────────────────────────
+// Each icon is a minimal SVG built on classical geometry principles
 
 function IconDashboard({ size=16, active=false }: { size?:number; active?:boolean }) {
   return (
@@ -80,6 +81,19 @@ function IconActivities({ size=16, active=false }: { size?:number; active?:boole
       <line x1="12" y1="1.5" x2="12" y2="5" />
       <line x1="4.5" y1="10" x2="7.5" y2="10" />
       <line x1="4.5" y1="12.5" x2="9" y2="12.5" />
+    </svg>
+  );
+}
+
+
+function IconSync({ size=16, active=false }: { size?:number; active?:boolean }) {
+  const s = active?"var(--gold)":"currentColor";
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={s} strokeWidth="1">
+      <path d="M13,8 A5,5 0 1,1 8,3" strokeLinecap="round"/>
+      <polyline points="11,1 13,3 11,5" strokeLinecap="round" strokeLinejoin="round"/>
+      <polyline points="5,11 3,13 5,15" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M3,8 A5,5 0 1,1 8,13" strokeLinecap="round"/>
     </svg>
   );
 }
@@ -640,36 +654,219 @@ function WellnessModal({ date, existing, onSave, onClose, saving }: { date:strin
 
 // ─── ACTIVITY DETAIL ─────────────────────────────────────────────────────────
 
-function ActivityDetailModal({ act, onClose, onEdit, onDelete }: { act:Activity; onClose:()=>void; onEdit:(a:Activity)=>void; onDelete:(id:string)=>void }) {
-  const sc=sportColor(act.sport);
-  const stats=[["Duration",fmtDuration(act.duration_seconds)],["Distance",fmtDist(act.distance_meters,act.sport)],["Elevation",act.elevation_gain?`↑${act.elevation_gain}m`:"—"],["Avg HR",act.avg_heart_rate?`${act.avg_heart_rate} bpm`:"—"],["Max HR",act.max_heart_rate?`${act.max_heart_rate} bpm`:"—"],["Avg Power",act.avg_power_watts?`${act.avg_power_watts}W`:"—"],["NP",act.normalized_power?`${act.normalized_power}W`:"—"],["TSS",String(act.tss??"-")],["Calories",act.calories?`${act.calories} kcal`:"—"],["Feel",act.feel_score?`★ ${act.feel_score}/10`:"—"]];
+function StatCell({ label, value, unit, color, hint, large }: { label:string; value:string|number|null; unit?:string; color?:string; hint?:string; large?:boolean }) {
+  if (!value && value !== 0) return (
+    <div>
+      <div style={{ display:"flex",alignItems:"center",gap:4,marginBottom:5 }}>
+        <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"var(--font-mono)" }}>{label}</p>
+        {hint&&<HintIcon text={hint} />}
+      </div>
+      <p style={{ fontSize:13,color:"var(--text-subtle)",fontFamily:"var(--font-mono)" }}>—</p>
+    </div>
+  );
   return (
-    <Modal title="Session detail" onClose={onClose} width={540}>
-      <div style={{ display:"flex",alignItems:"center",gap:14,marginBottom:20 }}>
-        <div style={{ width:42,height:42,borderRadius:8,background:sc+"12",border:"1px solid "+sc+"22",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
-          <SportIcon sport={act.sport} color={sc} size={18} />
+    <div>
+      <div style={{ display:"flex",alignItems:"center",gap:4,marginBottom:5 }}>
+        <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"var(--font-mono)" }}>{label}</p>
+        {hint&&<HintIcon text={hint} />}
+      </div>
+      <div style={{ display:"flex",alignItems:"baseline",gap:2 }}>
+        <span style={{ fontSize:large?20:13,fontWeight:large?300:500,fontFamily:large?"var(--font-display)":"var(--font-mono)",color:color??"var(--text)",letterSpacing:large?"-0.02em":"0",lineHeight:1 }}>{value}</span>
+        {unit&&<span style={{ fontSize:9,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",marginLeft:1 }}>{unit}</span>}
+      </div>
+    </div>
+  );
+}
+
+function SplitsChart({ splits, sport }: { splits: Array<{distance:number;moving_time:number;average_speed:number;average_heartrate?:number;split:number;pace_zone?:number}>; sport:string }) {
+  const data = splits.map(s => {
+    const paceSecKm = s.average_speed > 0 ? Math.round(1000 / s.average_speed) : null;
+    return {
+      km: `${s.split}`,
+      pace: paceSecKm ? parseFloat((paceSecKm/60).toFixed(2)) : null,
+      hr: s.average_heartrate ? Math.round(s.average_heartrate) : null,
+    };
+  });
+  const isCycling = sport === "cycling";
+  return (
+    <div>
+      <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"var(--font-mono)",marginBottom:10 }}>
+        {isCycling ? "Speed by km" : "Pace by km"} · splits
+      </p>
+      <ResponsiveContainer width="100%" height={110}>
+        <BarChart data={data} barSize={14} margin={{top:0,right:0,bottom:0,left:-28}}>
+          <CartesianGrid strokeDasharray="1 6" stroke="var(--border)" vertical={false} />
+          <XAxis dataKey="km" tick={{fill:"var(--text-subtle)",fontSize:8,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} />
+          <YAxis tick={{fill:"var(--text-subtle)",fontSize:8,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} reversed={!isCycling} />
+          <Tooltip content={<OTooltip />} />
+          <Bar dataKey="pace" name={isCycling?"Speed":"Pace"} radius={[2,2,0,0]} fill="var(--gold)" opacity={0.75} />
+        </BarChart>
+      </ResponsiveContainer>
+      {data.some(d=>d.hr) && (
+        <ResponsiveContainer width="100%" height={60} style={{marginTop:6}}>
+          <LineChart data={data} margin={{top:0,right:0,bottom:0,left:-28}}>
+            <YAxis tick={{fill:"var(--text-subtle)",fontSize:8,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} domain={["auto","auto"]} />
+            <Tooltip content={<OTooltip />} />
+            <Line type="monotone" dataKey="hr" name="HR" stroke="var(--terra)" strokeWidth={1.5} dot={false} />
+          </LineChart>
+        </ResponsiveContainer>
+      )}
+    </div>
+  );
+}
+
+function ActivityDetailModal({ act, onClose, onEdit, onDelete }: { act:Activity; onClose:()=>void; onEdit:(a:Activity)=>void; onDelete:(id:string)=>void }) {
+  const sc = sportColor(act.sport);
+  const isStrava = act.source === "strava";
+  const isCycling = act.sport === "cycling";
+  const isRunning = act.sport === "running";
+  
+  // Derived metrics
+  const efficiency = act.avg_heart_rate && act.avg_power_watts
+    ? Math.round((act.avg_power_watts / act.avg_heart_rate) * 100) / 100 : null;
+  const wPerKg = act.avg_power_watts && act.normalized_power ? null : null; // needs profile weight
+  const coasting = act.duration_seconds && act.elapsed_seconds && act.elapsed_seconds > act.duration_seconds
+    ? Math.round(((act.elapsed_seconds - act.duration_seconds) / act.elapsed_seconds) * 100) : null;
+  const paceStr = act.avg_pace_sec_km ? fmtPace(act.avg_pace_sec_km) : null;
+  const maxSpeedKmh = act.max_speed_ms ? Math.round(act.max_speed_ms * 3.6 * 10) / 10 : null;
+  const avgSpeedKmh = act.distance_meters && act.duration_seconds
+    ? Math.round((act.distance_meters / act.duration_seconds) * 3.6 * 10) / 10 : null;
+
+  return (
+    <Modal title="Session detail" onClose={onClose} width={640}>
+      {/* ── Header ── */}
+      <div style={{ display:"flex",alignItems:"center",gap:14,marginBottom:18 }}>
+        <div style={{ width:46,height:46,borderRadius:10,background:sc+"12",border:"1px solid "+sc+"22",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+          <SportIcon sport={act.sport} color={sc} size={20} />
         </div>
-        <div>
-          <p style={{ fontSize:15,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)",marginBottom:5 }}>{act.title}</p>
-          <div style={{ display:"flex",gap:6,flexWrap:"wrap" }}>
+        <div style={{ flex:1,minWidth:0 }}>
+          <p style={{ fontSize:17,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)",marginBottom:6,lineHeight:1.2 }}>{act.title}</p>
+          <div style={{ display:"flex",gap:6,flexWrap:"wrap",alignItems:"center" }}>
             <Badge color={sc}>{act.sport}</Badge>
             {act.type&&<Badge color="var(--stone)">{act.type}</Badge>}
+            {isStrava&&<Badge color="var(--terra)">Strava</Badge>}
+            {act.pr_count&&act.pr_count>0&&<Badge color="var(--gold)">🏆 {act.pr_count} PR{act.pr_count>1?"s":""}</Badge>}
+            {act.achievement_count&&act.achievement_count>0&&<Badge color="var(--olive)">★ {act.achievement_count}</Badge>}
             <span style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{act.date}</span>
           </div>
         </div>
+        {act.kudos_count&&act.kudos_count>0?(
+          <div style={{ textAlign:"center",flexShrink:0 }}>
+            <p style={{ fontSize:18,fontWeight:300,color:"var(--terra)",fontFamily:"var(--font-display)" }}>{act.kudos_count}</p>
+            <p style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.1em" }}>kudos</p>
+          </div>
+        ):null}
       </div>
-      <div style={{ display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:14,marginBottom:20 }}>
-        {stats.map(([l,v])=>(
-          <div key={l}>
-            <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4,fontFamily:"var(--font-mono)" }}>{l}</p>
-            <p style={{ fontSize:13,fontWeight:400,color:"var(--text)",fontFamily:"var(--font-mono)" }}>{v}</p>
+
+      <GreekDivider style={{ marginBottom:18 }} />
+
+      {/* ── Primary metrics — big numbers ── */}
+      <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:1,background:"var(--border)",borderRadius:8,overflow:"hidden",marginBottom:16 }}>
+        {[
+          { label:"Duration",  value:fmtDuration(act.duration_seconds), color:"var(--text)" },
+          { label:"Distance",  value:fmtDist(act.distance_meters,act.sport), color:"var(--text)" },
+          { label:"Load · TSS",value:act.tss??null, color:tssColor(act.tss??0) },
+          { label:"Elevation", value:act.elevation_gain?`↑${act.elevation_gain}m`:null, color:"var(--text)" },
+        ].map((m,i)=>(
+          <div key={i} style={{ background:"var(--surface)",padding:"14px 16px" }}>
+            <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"var(--font-mono)",marginBottom:8 }}>{m.label}</p>
+            <p style={{ fontSize:20,fontWeight:300,fontFamily:"var(--font-display)",color:m.color,lineHeight:1,letterSpacing:"-0.02em" }}>{m.value??"—"}</p>
           </div>
         ))}
       </div>
-      {act.notes&&<div style={{ background:"var(--bg)",borderRadius:6,padding:"12px 14px",marginBottom:20,borderLeft:"2px solid var(--border-hi)" }}><p style={{ fontSize:12,color:"var(--text-2)",lineHeight:1.65,fontFamily:"var(--font-display)",fontStyle:"italic" }}>&ldquo;{act.notes}&rdquo;</p></div>}
-      <div style={{ display:"flex",gap:8 }}>
+
+      {/* ── Pace / Speed ── */}
+      {(isRunning||isCycling)&&(
+        <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:16,padding:"14px 0",borderBottom:"1px solid var(--border)" }}>
+          <StatCell label={isRunning?"Avg pace":"Avg speed"} value={isRunning?paceStr:avgSpeedKmh} unit={isRunning?"/km":"km/h"} color="var(--olive)" />
+          <StatCell label={isRunning?"Best pace":"Max speed"} value={isRunning?null:maxSpeedKmh} unit={isRunning?"/km":"km/h"} />
+          <StatCell label="Cadence" value={act.average_cadence} unit={isRunning?"spm":"rpm"} hint={isRunning?"Steps per minute. Optimal: 170–180 spm":"Pedal revolutions per minute. Optimal: 85–100 rpm"} />
+          {isRunning&&act.elapsed_seconds&&act.duration_seconds&&act.elapsed_seconds>act.duration_seconds?(
+            <StatCell label="Moving time" value={fmtDuration(act.duration_seconds)} />
+          ):(
+            <StatCell label="Elapsed" value={fmtDuration(act.elapsed_seconds)} />
+          )}
+        </div>
+      )}
+
+      {/* ── Heart Rate ── */}
+      <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:16,padding:"14px 0",borderBottom:"1px solid var(--border)" }}>
+        <StatCell label="Avg HR"  value={act.avg_heart_rate}  unit="bpm" color={act.avg_heart_rate&&act.avg_heart_rate>160?"var(--terra)":"var(--text)"} />
+        <StatCell label="Max HR"  value={act.max_heart_rate}  unit="bpm" color="var(--terra)" />
+        <StatCell label="Suffer"  value={act.suffer_score}    hint="Strava Suffer Score — relative effort based on HR zones" color="var(--gold)" />
+        <StatCell label="Feel"    value={act.feel_score?`${act.feel_score}/10`:null} color={act.feel_score&&act.feel_score>=7?"var(--olive)":act.feel_score&&act.feel_score>=5?"var(--gold)":"var(--terra)"} />
+      </div>
+
+      {/* ── Power (cycling) ── */}
+      {(act.avg_power_watts||act.normalized_power)&&(
+        <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:16,padding:"14px 0",borderBottom:"1px solid var(--border)" }}>
+          <StatCell label="Avg power" value={act.avg_power_watts} unit="W" color="var(--gold)" />
+          <StatCell label="NP" value={act.normalized_power} unit="W" color="var(--gold)" hint="Normalized Power — variability-adjusted average. Better represents true physiological cost." />
+          <StatCell label="Max power" value={act.max_power_watts} unit="W" />
+          <StatCell label="Var. index" value={act.variability_index} hint="NP ÷ Avg Power. Closer to 1.00 = more steady effort. >1.10 = high variability." />
+        </div>
+      )}
+
+      {/* ── Energy ── */}
+      {(act.calories||act.kilojoules)&&(
+        <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:16,padding:"14px 0",borderBottom:"1px solid var(--border)" }}>
+          <StatCell label="Calories" value={act.calories} unit="kcal" />
+          <StatCell label="Kilojoules" value={act.kilojoules} unit="kJ" hint="Mechanical energy output (cycling). ~4 kJ ≈ 1 kcal at ~25% efficiency." />
+          {efficiency&&<StatCell label="W/HR ratio" value={efficiency} hint="Power-to-HR efficiency. Higher = more aerobically efficient." />}
+          {coasting!==null&&<StatCell label="Coasting" value={`${coasting}%`} hint="Time stopped or coasting vs. total elapsed time." />}
+        </div>
+      )}
+
+      {/* ── Gear & Device ── */}
+      {(act.gear_name||act.device_name)&&(
+        <div style={{ display:"flex",gap:24,marginBottom:16,padding:"12px 0",borderBottom:"1px solid var(--border)" }}>
+          {act.gear_name&&(
+            <div>
+              <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"var(--font-mono)",marginBottom:4 }}>Equipment</p>
+              <p style={{ fontSize:12,color:"var(--text)",fontFamily:"var(--font-mono)" }}>{act.gear_name}</p>
+            </div>
+          )}
+          {act.device_name&&(
+            <div>
+              <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"var(--font-mono)",marginBottom:4 }}>Device</p>
+              <p style={{ fontSize:12,color:"var(--text)",fontFamily:"var(--font-mono)" }}>{act.device_name}</p>
+            </div>
+          )}
+          {isStrava&&act.strava_id&&(
+            <div style={{ marginLeft:"auto" }}>
+              <a href={`https://www.strava.com/activities/${act.strava_id}`} target="_blank" rel="noopener noreferrer"
+                style={{ fontSize:10,color:"var(--terra)",fontFamily:"var(--font-mono)",textDecoration:"none",border:"1px solid var(--terra)30",borderRadius:4,padding:"4px 10px" }}>
+                View on Strava →
+              </a>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Splits ── */}
+      {act.splits_metric&&act.splits_metric.length>1&&(
+        <div style={{ marginBottom:16 }}>
+          <SplitsChart splits={act.splits_metric} sport={act.sport} />
+        </div>
+      )}
+
+      {/* ── Notes ── */}
+      {act.notes&&(
+        <div style={{ background:"var(--bg)",borderRadius:6,padding:"12px 14px",marginBottom:16,borderLeft:"2px solid var(--border-hi)" }}>
+          <p style={{ fontSize:12,color:"var(--text-2)",lineHeight:1.7,fontFamily:"var(--font-display)",fontStyle:"italic" }}>&ldquo;{act.notes}&rdquo;</p>
+        </div>
+      )}
+
+      {/* ── Actions ── */}
+      <div style={{ display:"flex",gap:8,paddingTop:4 }}>
         <Btn onClick={()=>{onClose();onEdit(act);}}>Edit</Btn>
         <Btn variant="danger" onClick={()=>{onClose();onDelete(act.id);}}>Delete</Btn>
+        {isStrava&&act.strava_id&&!act.gear_name&&!act.device_name&&(
+          <a href={`https://www.strava.com/activities/${act.strava_id}`} target="_blank" rel="noopener noreferrer"
+            style={{ fontSize:11,color:"var(--terra)",fontFamily:"var(--font-mono)",textDecoration:"none",border:"1px solid var(--terra)30",borderRadius:6,padding:"9px 16px",display:"flex",alignItems:"center" }}>
+            Strava →
+          </a>
+        )}
         <Btn variant="ghost" onClick={onClose} style={{ marginLeft:"auto" }}>Close</Btn>
       </div>
     </Modal>
@@ -1397,9 +1594,274 @@ function ProfilePage({ profile, onSaved }: { profile:Profile|null; onSaved:()=>v
   );
 }
 
+
+// ─── SYNC PAGE ────────────────────────────────────────────────────────────────
+
+function SyncPage({ onRefresh }: { onRefresh: () => void }) {
+  const [stravaStatus, setStravaStatus] = useState<"loading"|"connected"|"disconnected">("loading");
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<{ imported: number; message: string } | null>(null);
+  const [syncDays, setSyncDays] = useState(30);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<{ imported: number; errors: string[]; message: string } | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const showToast = (message: string, type: "success" | "error" | "info" = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  // Check Strava connection status — re-runs if tokens just saved
+  useEffect(() => {
+    setStravaStatus("loading");
+    fetch("/api/strava/sync")
+      .then(r => r.json())
+      .then(d => setStravaStatus(d.connected ? "connected" : "disconnected"))
+      .catch(() => setStravaStatus("disconnected"));
+  }, []); // intentionally runs once; AppShell re-mounts SyncPage on navigation
+
+  const connectStrava = () => { window.location.href = "/api/strava/auth"; };
+
+  const syncStrava = async () => {
+    setSyncing(true);
+    setSyncResult(null);
+    try {
+      const res = await fetch("/api/strava/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ days: syncDays }),
+      });
+      const d = await res.json();
+      if (d.error) throw new Error(d.error);
+      setSyncResult(d);
+      showToast(d.message, d.imported > 0 ? "success" : "info");
+      if (d.imported > 0) onRefresh();
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : "Sync failed", "error");
+    } finally { setSyncing(false); }
+  };
+
+  const handleFiles = async (files: FileList | null) => {
+    if (!files?.length) return;
+    setImporting(true);
+    setImportResult(null);
+    const fd = new FormData();
+    Array.from(files).forEach(f => fd.append("files", f));
+    try {
+      const res = await fetch("/api/import", { method: "POST", body: fd });
+      const d = await res.json();
+      setImportResult(d);
+      showToast(d.message, d.imported > 0 ? "success" : "info");
+      if (d.imported > 0) onRefresh();
+    } catch { showToast("Import failed", "error"); }
+    finally { setImporting(false); }
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    handleFiles(e.dataTransfer.files);
+  };
+
+  const stravaColor = stravaStatus === "connected" ? "var(--olive)" : "var(--terra)";
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {toast && <Toast message={toast.message} type={toast.type} onDone={() => setToast(null)} />}
+      <PageHeader supra="Integrations" title="Sync & Import" />
+
+      {/* ── STRAVA ── */}
+      <Card p={24}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16, marginBottom: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            {/* Strava flame logo */}
+            <div style={{ width: 44, height: 44, borderRadius: 10, background: "#FC4C02", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
+                <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" />
+              </svg>
+            </div>
+            <div>
+              <p style={{ fontSize: 14, fontWeight: 500, color: "var(--text)", marginBottom: 3, fontFamily: "var(--font-display)", fontStyle: "italic" }}>Strava</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{ width: 5, height: 5, borderRadius: "50%", background: stravaColor }} />
+                <p style={{ fontSize: 10, color: stravaColor, fontFamily: "var(--font-mono)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                  {stravaStatus === "loading" ? "checking…" : stravaStatus === "connected" ? "connected" : "not connected"}
+                </p>
+              </div>
+            </div>
+          </div>
+          {stravaStatus === "disconnected" && (
+            <Btn onClick={connectStrava}>Connect Strava →</Btn>
+          )}
+        </div>
+
+        {stravaStatus === "connected" && (
+          <>
+            <GreekDivider style={{ marginBottom: 20 }} />
+            <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                    <label style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "var(--font-mono)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                      Sync period
+                    </label>
+                    <HintIcon text="How many days back to pull from Strava. Already-synced activities won't be duplicated." />
+                  </div>
+                  <span style={{ fontSize: 13, color: "var(--text)", fontFamily: "var(--font-display)", fontWeight: 300 }}>
+                    {syncDays} <span style={{ fontSize: 9, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>days</span>
+                  </span>
+                </div>
+                <input type="range" min={7} max={365} step={7} value={syncDays}
+                  onChange={e => setSyncDays(parseInt(e.target.value))} style={{ width: "100%" }} />
+                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
+                  {[7, 30, 90, 180, 365].map(d => (
+                    <button key={d} onClick={() => setSyncDays(d)}
+                      style={{ fontSize: 9, color: syncDays === d ? "var(--gold)" : "var(--text-subtle)", background: "none", border: "none", cursor: "pointer", fontFamily: "var(--font-mono)", padding: "2px 4px" }}>
+                      {d === 365 ? "1y" : d === 180 ? "6m" : d === 90 ? "3m" : d + "d"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <Btn onClick={syncStrava} disabled={syncing} style={{ flexShrink: 0 }}>
+                {syncing ? "Syncing…" : "↓ Sync now"}
+              </Btn>
+            </div>
+
+            {syncResult && (
+              <div style={{ marginTop: 16, padding: "12px 16px", borderRadius: 8, background: syncResult.imported > 0 ? "var(--olive-dim)" : "var(--surface-hi)", border: `1px solid ${syncResult.imported > 0 ? "var(--olive)" : "var(--border)"}30` }}>
+                <p style={{ fontSize: 12, color: syncResult.imported > 0 ? "var(--olive)" : "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
+                  {syncResult.imported > 0 ? "✓" : "·"} {syncResult.message}
+                </p>
+              </div>
+            )}
+          </>
+        )}
+
+        {stravaStatus === "disconnected" && (
+          <div style={{ padding: "14px 0 2px" }}>
+            <p style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.7, fontFamily: "var(--font-display)", fontStyle: "italic" }}>
+              Connect your Strava account to automatically import all your runs, rides, and swims.
+              Activities already in Olympeaks won&apos;t be duplicated.
+            </p>
+            <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 6 }}>
+              {["Imports runs, rides, swims, and more", "Maps HR, power, pace, elevation automatically", "Estimates TSS from Strava Suffer Score", "Incremental — only imports new activities"].map((f, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--gold)", flexShrink: 0 }} />
+                  <p style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>{f}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </Card>
+
+      {/* ── GARMIN / FILE IMPORT ── */}
+      <Card p={24}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20 }}>
+          <div style={{ width: 44, height: 44, borderRadius: 10, background: "#003366", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <svg width="22" height="16" viewBox="0 0 60 42" fill="white">
+              <path d="M30 0C13.4 0 0 9.4 0 21s13.4 21 30 21 30-9.4 30-21S46.6 0 30 0zm0 36c-8.3 0-15-6.7-15-15S21.7 6 30 6s15 6.7 15 15-6.7 15-15 15zm0-24c-5 0-9 4-9 9s4 9 9 9 9-4 9-9-4-9-9-9z" />
+            </svg>
+          </div>
+          <div>
+            <p style={{ fontSize: 14, fontWeight: 500, color: "var(--text)", marginBottom: 3, fontFamily: "var(--font-display)", fontStyle: "italic" }}>Garmin / File Import</p>
+            <p style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "var(--font-mono)", textTransform: "uppercase", letterSpacing: "0.08em" }}>GPX · TCX · FIT</p>
+          </div>
+        </div>
+
+        <GreekDivider style={{ marginBottom: 20 }} />
+
+        {/* Drop zone */}
+        <div
+          onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={onDrop}
+          onClick={() => fileRef.current?.click()}
+          style={{
+            border: `1px dashed ${dragOver ? "var(--gold)" : "var(--border-hi)"}`,
+            borderRadius: 10,
+            padding: "36px 24px",
+            textAlign: "center",
+            cursor: "pointer",
+            background: dragOver ? "var(--gold-dim)" : "var(--bg)",
+            transition: "all 0.15s",
+            marginBottom: 16,
+          }}>
+          <input ref={fileRef} type="file" multiple accept=".gpx,.tcx,.fit"
+            style={{ display: "none" }} onChange={e => handleFiles(e.target.files)} />
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="var(--text-subtle)" strokeWidth="1" style={{ margin: "0 auto 12px" }}>
+            <path d="M14 18 L14 8" strokeLinecap="round" />
+            <polyline points="10,12 14,8 18,12" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M5,20 L5,23 L23,23 L23,20" strokeLinecap="round" />
+          </svg>
+          <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 4, fontFamily: "var(--font-mono)" }}>
+            {importing ? "Importing…" : "Drop .gpx or .tcx files here"}
+          </p>
+          <p style={{ fontSize: 10, color: "var(--text-subtle)", fontFamily: "var(--font-mono)" }}>
+            or click to browse · multiple files supported
+          </p>
+        </div>
+
+        {importResult && (
+          <div style={{ padding: "12px 16px", borderRadius: 8, background: importResult.imported > 0 ? "var(--olive-dim)" : "var(--terra-dim)", border: `1px solid ${importResult.imported > 0 ? "var(--olive)" : "var(--terra)"}30` }}>
+            <p style={{ fontSize: 12, color: importResult.imported > 0 ? "var(--olive)" : "var(--terra)", fontFamily: "var(--font-mono)", marginBottom: importResult.errors.length ? 6 : 0 }}>
+              {importResult.imported > 0 ? "✓" : "✕"} {importResult.message}
+            </p>
+            {importResult.errors.map((e, i) => (
+              <p key={i} style={{ fontSize: 10, color: "var(--terra)", fontFamily: "var(--font-mono)", marginTop: 3 }}>⚠ {e}</p>
+            ))}
+          </div>
+        )}
+
+        <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 5 }}>
+          <p style={{ fontSize: 9, color: "var(--text-subtle)", fontFamily: "var(--font-mono)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 4 }}>How to export from Garmin</p>
+          {[
+            "Go to Garmin Connect → Activities",
+            "Open any activity → ⋯ → Export to GPX",
+            "Or bulk export via Settings → Account → Export Data",
+          ].map((s, i) => (
+            <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+              <span style={{ fontSize: 9, color: "var(--gold)", fontFamily: "var(--font-mono)", flexShrink: 0, marginTop: 1 }}>{i + 1}.</span>
+              <p style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>{s}</p>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* ── SETUP GUIDE ── */}
+      <Card p={22}>
+        <SectionTitle mono sub="Add to your .env.local and Vercel environment variables">Strava API setup</SectionTitle>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {[
+            { step: "1", text: "Go to strava.com/settings/api and create an app" },
+            { step: "2", text: 'Set Authorization Callback Domain to your Vercel URL (e.g. olympeaks.vercel.app)' },
+            { step: "3", text: "Copy Client ID and Client Secret" },
+            { step: "4", text: "Add to Vercel: STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET, NEXT_PUBLIC_APP_URL" },
+          ].map(({ step, text }) => (
+            <div key={step} style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: "10px 0", borderBottom: step !== "4" ? "1px solid var(--border)" : "none" }}>
+              <div style={{ width: 20, height: 20, borderRadius: "50%", border: "1px solid var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
+                <span style={{ fontSize: 9, color: "var(--gold)", fontFamily: "var(--font-mono)", fontWeight: 700 }}>{step}</span>
+              </div>
+              <p style={{ fontSize: 11, color: "var(--text-muted)", lineHeight: 1.6, fontFamily: "var(--font-mono)" }}>{text}</p>
+            </div>
+          ))}
+        </div>
+        <div style={{ marginTop: 16, padding: "12px 14px", background: "var(--bg)", borderRadius: 6, fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--text-muted)", lineHeight: 1.8 }}>
+          <span style={{ color: "var(--text-subtle)" }}># .env.local</span><br />
+          STRAVA_CLIENT_ID=<span style={{ color: "var(--gold)" }}>your_client_id</span><br />
+          STRAVA_CLIENT_SECRET=<span style={{ color: "var(--gold)" }}>your_client_secret</span><br />
+          NEXT_PUBLIC_APP_URL=<span style={{ color: "var(--gold)" }}>https://olympeaks.vercel.app</span>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
 // ─── SIDEBAR ─────────────────────────────────────────────────────────────────
 
-type PageId="dashboard"|"coach"|"fueling"|"analysis"|"races"|"activities"|"profile";
+type PageId="dashboard"|"coach"|"fueling"|"analysis"|"races"|"activities"|"sync"|"profile";
 
 const NAV=[
   {id:"dashboard" as PageId, label:"Dashboard",  Icon:IconDashboard,  sublabel:"Home"},
@@ -1408,6 +1870,7 @@ const NAV=[
   {id:"analysis"  as PageId, label:"Analysis",   Icon:IconAnalysis,  sublabel:"Stats"},
   {id:"races"     as PageId, label:"Races",      Icon:IconRaces,     sublabel:"Races"},
   {id:"activities"as PageId, label:"Activities", Icon:IconActivities,sublabel:"Log"},
+  {id:"sync"      as PageId, label:"Sync",       Icon:IconSync,      sublabel:"Sync"},
 ];
 
 function useIsMobile() {
@@ -1551,6 +2014,22 @@ export function AppShell() {
 
   useEffect(()=>{load();},[load]);
 
+  // Handle ?strava= param from OAuth redirect — runs at top level, not inside SyncPage
+  useEffect(()=>{
+    if (typeof window === "undefined") return;
+    const p = new URLSearchParams(window.location.search);
+    const s = p.get("strava");
+    if (s === "connected") {
+      setToast({message:"✓ Strava connected successfully!",type:"success"});
+      setPage("sync");
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+    if (s === "denied")  { setToast({message:"Strava connection denied",type:"info"}); window.history.replaceState({}, "", window.location.pathname); }
+    if (s === "error")   { setToast({message:"Strava auth error — check your credentials",type:"error"}); window.history.replaceState({}, "", window.location.pathname); }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[]);
+
+
   const saveWellness=async(f:WF)=>{
     setWellnessSaving(true);
     try {
@@ -1609,6 +2088,7 @@ export function AppShell() {
               case "analysis":   return <AnalysisPage activities={activities} />;
               case "races":      return <RacesPage activities={activities} />;
               case "activities": return <ActivitiesPage activities={activities} onRefresh={load} />;
+              case "sync":       return <SyncPage onRefresh={load} />;
               case "profile":    return <ProfilePage profile={profile} onSaved={load} />;
             }
           })()}

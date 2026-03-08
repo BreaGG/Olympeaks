@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <!-- Background -->
+  <rect width="400" height="400" fill="#0A0A08"/>
+
+  <!-- Noise texture overlay (subtle) -->
+  <filter id="noise">
+    <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" stitchTiles="stitch"/>
+    <feColorMatrix type="saturate" values="0"/>
+    <feBlend in="SourceGraphic" mode="overlay" result="noisy"/>
+  </filter>
+  <rect width="400" height="400" fill="#0A0A08" filter="url(#noise)" opacity="0.04"/>
+
+  <!-- Glow behind triangle -->
+  <radialGradient id="glow" cx="50%" cy="62%" r="38%">
+    <stop offset="0%" stop-color="#C8A84E" stop-opacity="0.18"/>
+    <stop offset="100%" stop-color="#C8A84E" stop-opacity="0"/>
+  </radialGradient>
+  <ellipse cx="200" cy="248" rx="120" ry="80" fill="url(#glow)"/>
+
+  <!-- Outer triangle -->
+  <polygon points="200,68 338,300 62,300"
+    fill="none"
+    stroke="#C8A84E"
+    stroke-width="1.5"
+    stroke-linejoin="miter"/>
+
+  <!-- Inner triangle — filled subtly -->
+  <polygon points="200,128 284,300 116,300"
+    fill="#C8A84E"
+    fill-opacity="0.07"
+    stroke="none"/>
+
+  <!-- Second inner triangle outline -->
+  <polygon points="200,128 284,300 116,300"
+    fill="none"
+    stroke="#C8A84E"
+    stroke-width="0.8"
+    stroke-opacity="0.4"
+    stroke-linejoin="miter"/>
+
+  <!-- Central axis — column -->
+  <line x1="200" y1="68" x2="200" y2="300"
+    stroke="#C8A84E" stroke-width="0.8" opacity="0.3"/>
+
+  <!-- Entablature lines — horizontal crossbars -->
+  <line x1="142" y1="205" x2="258" y2="205"
+    stroke="#C8A84E" stroke-width="0.8" opacity="0.5"/>
+  <line x1="110" y1="258" x2="290" y2="258"
+    stroke="#C8A84E" stroke-width="0.8" opacity="0.3"/>
+
+  <!-- Small apex diamond -->
+  <polygon points="200,62 205,68 200,74 195,68"
+    fill="#C8A84E" fill-opacity="0.6"/>
+
+  <!-- Greek meander base line -->
+  <path d="M62,308 L338,308"
+    stroke="#C8A84E" stroke-width="0.6" stroke-opacity="0.25"/>
+
+  <!-- OLYMPEAKS wordmark -->
+  <text
+    x="200" y="348"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="22"
+    font-weight="400"
+    letter-spacing="10"
+    fill="#C8A84E"
+    text-anchor="middle"
+    font-style="italic">OLYMPEAKS</text>
+
+  <!-- Tagline -->
+  <text
+    x="200" y="370"
+    font-family="'Courier New', monospace"
+    font-size="8"
+    font-weight="400"
+    letter-spacing="4"
+    fill="#C8A84E"
+    fill-opacity="0.45"
+    text-anchor="middle">REACH YOUR PEAK</text>
+
+  <!-- Thin decorative lines flanking wordmark -->
+  <line x1="62" y1="338" x2="140" y2="338" stroke="#C8A84E" stroke-width="0.5" opacity="0.2"/>
+  <line x1="260" y1="338" x2="338" y2="338" stroke="#C8A84E" stroke-width="0.5" opacity="0.2"/>
+</svg>
