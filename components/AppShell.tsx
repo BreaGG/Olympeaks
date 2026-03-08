@@ -62,7 +62,7 @@ function Markdown({ text, size=13, color="var(--text-2)" }: { text:string; size?
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
-  LineChart, Line, AreaChart, Area, BarChart, Bar,
+  LineChart, Line, AreaChart, Area, BarChart, Bar, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine,
   ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis,
 } from "recharts";
@@ -458,8 +458,8 @@ function Sel({ value, onChange, options }: { value:string; onChange:(v:string)=>
 
 // ─── CARD PRIMITIVES ─────────────────────────────────────────────────────────
 
-function Card({ children, style, p=22, className }: { children:React.ReactNode; style?:React.CSSProperties; p?:number; className?:string }) {
-  return <div className={className} style={{ background:"var(--surface)",border:"1px solid var(--border)",borderRadius:10,...style,padding:p }}>{children}</div>;
+function Card({ children, style, p=16, className }: { children:React.ReactNode; style?:React.CSSProperties; p?:number; className?:string }) {
+  return <div className={className} style={{ background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,...style,padding:p }}>{children}</div>;
 }
 
 function SectionTitle({ children, sub, right, mono }: { children:React.ReactNode; sub?:string; right?:React.ReactNode; mono?:boolean }) {
@@ -532,6 +532,100 @@ function MetricRow({ items }: { items:Array<{ label:string; value:string; unit?:
           {item.sub&&<p style={{ fontSize:10,color:"var(--text-subtle)",marginTop:5,fontFamily:"var(--font-mono)" }}>{item.sub}</p>}
         </div>
       ))}
+    </div>
+  );
+}
+
+// ─── ACTIVITY FORM ────────────────────────────────────────────────────────────
+
+// ─── GOAL EDITOR ─────────────────────────────────────────────────────────────
+
+type GoalData = { name:string; date:string; distance:string; targetTime:string };
+
+const RACE_PRESETS = [
+  { label:"5K",          distance:"5 km",              category:"run"   },
+  { label:"10K",         distance:"10 km",             category:"run"   },
+  { label:"Half",        distance:"21.1 km",           category:"run"   },
+  { label:"Marathon",    distance:"42.2 km",           category:"run"   },
+  { label:"Ultra 50K",   distance:"50 km",             category:"run"   },
+  { label:"Ultra 100K",  distance:"100 km",            category:"run"   },
+  { label:"Sprint",      distance:"750m/20km/5km",     category:"tri"   },
+  { label:"Olympic",     distance:"1.5km/40km/10km",   category:"tri"   },
+  { label:"70.3",        distance:"1.9km/90km/21.1km", category:"tri"   },
+  { label:"Ironman",     distance:"3.8km/180km/42km",  category:"tri"   },
+  { label:"Gran Fondo",  distance:"100+ km",           category:"cycle" },
+  { label:"Century",     distance:"160 km",            category:"cycle" },
+  { label:"Custom",      distance:"",                  category:"other" },
+];
+
+function GoalEditor({ initial, onSave }: { initial:GoalData|null; onSave:(g:GoalData)=>void }) {
+  const [f,setF]=useState<GoalData>(initial??{name:"",date:"",distance:"",targetTime:""});
+  const [preset,setPreset]=useState<string>(
+    RACE_PRESETS.find(p=>p.distance===initial?.distance)?.label??"Custom"
+  );
+  const s=(k:keyof GoalData)=>(v:string)=>setF(p=>({...p,[k]:v}));
+
+  const daysLeft=f.date?Math.ceil((new Date(f.date).getTime()-Date.now())/86400000):null;
+  const canSave=f.name.trim()&&f.date;
+
+  return (
+    <div style={{ display:"flex",flexDirection:"column",gap:14 }}>
+      {/* Race name */}
+      <div style={{ display:"grid",gridTemplateColumns:"80px 1fr",gap:10,alignItems:"center" }}>
+        <span style={{ fontSize:9,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>Race name</span>
+        <input value={f.name} onChange={e=>s("name")(e.target.value)} placeholder="e.g. Berlin Marathon"
+          style={{ padding:"7px 10px",borderRadius:5,border:"1px solid var(--border)",background:"var(--bg)",color:"var(--text)",fontSize:12,fontFamily:"var(--font-mono)",width:"100%",boxSizing:"border-box" }} />
+      </div>
+
+      {/* Distance presets — grouped by category */}
+      <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
+        <span style={{ fontSize:9,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>Distance</span>
+        {(["run","tri","cycle","other"] as const).map(cat=>{
+          const catLabel:{[k:string]:string}={run:"Running",tri:"Triathlon",cycle:"Cycling",other:"Other"};
+          const items=RACE_PRESETS.filter(p=>p.category===cat);
+          return (
+            <div key={cat} style={{ display:"flex",alignItems:"center",gap:8 }}>
+              <span style={{ fontSize:9,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",width:56,flexShrink:0 }}>{catLabel[cat]}</span>
+              <div style={{ display:"flex",gap:4,flexWrap:"wrap" }}>
+                {items.map(p=>(
+                  <button key={p.label} onClick={()=>{setPreset(p.label);if(p.distance)s("distance")(p.distance);}}
+                    style={{ padding:"4px 10px",borderRadius:4,cursor:"pointer",fontSize:10,border:`1px solid ${preset===p.label?"var(--gold)":"var(--border)"}`,background:preset===p.label?"var(--gold-dim)":"transparent",color:preset===p.label?"var(--gold)":"var(--text-muted)",fontFamily:"var(--font-mono)",whiteSpace:"nowrap" }}>
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+        {preset==="Custom"&&(
+          <div style={{ display:"flex",alignItems:"center",gap:8 }}>
+            <span style={{ fontSize:9,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",width:56,flexShrink:0 }}>Distance</span>
+            <input value={f.distance} onChange={e=>s("distance")(e.target.value)} placeholder="e.g. 50 km"
+              style={{ padding:"6px 10px",borderRadius:4,border:"1px solid var(--border)",background:"var(--bg)",color:"var(--text)",fontSize:11,fontFamily:"var(--font-mono)",width:120 }} />
+          </div>
+        )}
+      </div>
+
+      {/* Race date */}
+      <div style={{ display:"grid",gridTemplateColumns:"80px 1fr auto",gap:10,alignItems:"center" }}>
+        <span style={{ fontSize:9,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>Race date</span>
+        <input type="date" value={f.date} onChange={e=>s("date")(e.target.value)}
+          style={{ padding:"7px 10px",borderRadius:5,border:"1px solid var(--border)",background:"var(--bg)",color:"var(--text)",fontSize:12,fontFamily:"var(--font-mono)",colorScheme:"dark" }} />
+        {daysLeft!==null&&(
+          <span style={{ fontSize:9,color:daysLeft<0?"var(--terra)":daysLeft<42?"var(--gold)":"var(--olive)",fontFamily:"var(--font-mono)",whiteSpace:"nowrap" }}>
+            {daysLeft<0?`${Math.abs(daysLeft)}d ago`:`${daysLeft} days`}
+          </span>
+        )}
+      </div>
+
+      {/* Target time */}
+      <div style={{ display:"grid",gridTemplateColumns:"80px 1fr",gap:10,alignItems:"center" }}>
+        <span style={{ fontSize:9,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>Target time</span>
+        <input value={f.targetTime} onChange={e=>s("targetTime")(e.target.value)} placeholder="e.g. 3:30:00  (optional)"
+          style={{ padding:"7px 10px",borderRadius:5,border:"1px solid var(--border)",background:"var(--bg)",color:"var(--text)",fontSize:12,fontFamily:"var(--font-mono)",width:"100%",boxSizing:"border-box" }} />
+      </div>
+
+      <Btn onClick={()=>canSave&&onSave(f)} disabled={!canSave} size="sm">Save goal →</Btn>
     </div>
   );
 }
@@ -767,22 +861,28 @@ function SplitsChart({ splits, sport }: { splits: Array<{distance:number;moving_
       <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"var(--font-mono)",marginBottom:10 }}>
         {isCycling ? "Speed by km" : "Pace by km"} · splits
       </p>
-      <ResponsiveContainer width="100%" height={110}>
-        <BarChart data={data} barSize={14} margin={{top:0,right:0,bottom:0,left:-28}}>
-          <CartesianGrid strokeDasharray="1 6" stroke="var(--border)" vertical={false} />
-          <XAxis dataKey="km" tick={{fill:"var(--text-subtle)",fontSize:8,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} />
+      <ResponsiveContainer width="100%" height={120}>
+        <BarChart data={data} barSize={Math.max(8,Math.min(22,Math.floor(300/data.length)))} margin={{top:6,right:4,bottom:0,left:-24}} barCategoryGap="20%">
+          <CartesianGrid strokeDasharray="2 6" stroke="var(--border)" vertical={false} />
+          <XAxis dataKey="km" tick={{fill:"var(--text-subtle)",fontSize:8,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} interval={data.length>20?2:0} />
           <YAxis tick={{fill:"var(--text-subtle)",fontSize:8,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} reversed={!isCycling} />
-          <Tooltip content={<OTooltip />} />
-          <Bar dataKey="pace" name={isCycling?"Speed":"Pace"} radius={[2,2,0,0]} fill="var(--gold)" opacity={0.75} />
+          <Tooltip content={<OTooltip />} cursor={{fill:"var(--border)",opacity:0.3,radius:2}} />
+          <Bar dataKey="pace" name={isCycling?"Speed":"Pace"} radius={[3,3,0,0]} fill="var(--gold)" opacity={0.85} />
         </BarChart>
       </ResponsiveContainer>
       {data.some(d=>d.hr) && (
-        <ResponsiveContainer width="100%" height={60} style={{marginTop:6}}>
-          <LineChart data={data} margin={{top:0,right:0,bottom:0,left:-28}}>
-            <YAxis tick={{fill:"var(--text-subtle)",fontSize:8,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} domain={["auto","auto"]} />
-            <Tooltip content={<OTooltip />} />
-            <Line type="monotone" dataKey="hr" name="HR" stroke="var(--terra)" strokeWidth={1.5} dot={false} />
-          </LineChart>
+        <ResponsiveContainer width="100%" height={55} style={{marginTop:4}}>
+          <AreaChart data={data} margin={{top:4,right:4,bottom:0,left:-24}}>
+            <defs>
+              <linearGradient id="hrg" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="var(--terra)" stopOpacity={0.2}/>
+                <stop offset="100%" stopColor="var(--terra)" stopOpacity={0}/>
+              </linearGradient>
+            </defs>
+            <YAxis tick={{fill:"var(--text-subtle)",fontSize:8,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} domain={["auto","auto"]} width={28} />
+            <Tooltip content={<OTooltip />} cursor={{stroke:"var(--border-hi)",strokeWidth:1,strokeDasharray:"2 2"}} />
+            <Area type="monotone" dataKey="hr" name="HR" stroke="var(--terra)" fill="url(#hrg)" strokeWidth={1.5} dot={false} />
+          </AreaChart>
         </ResponsiveContainer>
       )}
     </div>
@@ -1355,7 +1455,7 @@ function ActivityDetailModal({ act, profile, onClose, onEdit, onDelete }: { act:
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
 
-function DashboardPage({ profile, activities, metrics, onNavigate, onLogWellness }: { profile:Profile|null; activities:Activity[]; metrics:DailyMetrics|null; onNavigate:(p:PageId)=>void; onLogWellness:()=>void }) {
+function DashboardPage({ profile, activities, metrics, goal, onGoalChange, onNavigate, onLogWellness }: { profile:Profile|null; activities:Activity[]; metrics:DailyMetrics|null; goal:{name:string;date:string;distance:string;targetTime:string}|null; onGoalChange:(g:{name:string;date:string;distance:string;targetTime:string}|null)=>void; onNavigate:(p:PageId)=>void; onLogWellness:()=>void }) {
   const tm=calcTM(activities);
   const weekActs=activities.filter(a=>new Date(a.date)>=new Date(Date.now()-7*86400000));
   const weekTSS=weekActs.reduce((s,a)=>s+(a.tss??0),0);
@@ -1368,6 +1468,40 @@ function DashboardPage({ profile, activities, metrics, onNavigate, onLogWellness
   const fs=getFormLabel(tm.tsb);
   const rc=metrics?calcRec(metrics):null;
   const rcColor=!rc?"var(--text-muted)":rc>=70?"var(--olive)":rc>=50?"var(--gold)":"var(--terra)";
+  const [showGoalEditor,setShowGoalEditor]=useState(false);
+  const [dismissed,setDismissed]=useState<Set<number>>(()=>{
+    try {
+      const raw=localStorage.getItem("op-alerts-dismissed");
+      if(!raw) return new Set<number>();
+      const parsed=JSON.parse(raw);
+      if(Date.now()-parsed.ts>86400000){localStorage.removeItem("op-alerts-dismissed");return new Set<number>();}
+      return new Set<number>(parsed.ids);
+    } catch { return new Set<number>(); }
+  });
+  const dismiss=(i:number)=>{
+    setDismissed(s=>{
+      const next=new Set([...s,i]);
+      try { localStorage.setItem("op-alerts-dismissed",JSON.stringify({ids:[...next],ts:Date.now()})); } catch {}
+      return next;
+    });
+  };
+
+  // ── Load alerts ────────────────────────────────────────────────────────────
+  const prevWeekActs=activities.filter(a=>{const d=new Date(a.date),now=Date.now();return d>=new Date(now-14*86400000)&&d<new Date(now-7*86400000);});
+  const prevWeekTSS=prevWeekActs.reduce((s,a)=>s+(a.tss??0),0);
+  const atkSpike=prevWeekTSS>0?Math.round(((weekTSS-prevWeekTSS)/prevWeekTSS)*100):null;
+  const daysSinceTraining=activities.length>0?Math.floor((Date.now()-new Date(activities[0].date).getTime())/86400000):null;
+  const alerts:(({type:"warning"|"danger"|"info";msg:string}))[] = [];
+  if(atkSpike!==null&&atkSpike>25) alerts.push({type:"danger",msg:`Weekly load up ${atkSpike}% vs last week — injury risk. Consider an easy day.`});
+  else if(atkSpike!==null&&atkSpike>15) alerts.push({type:"warning",msg:`Load increased ${atkSpike}% this week. Monitor fatigue closely.`});
+  if(daysSinceTraining!==null&&daysSinceTraining>=5) alerts.push({type:"warning",msg:`${daysSinceTraining} days without training — fitness starting to decline.`});
+  if(tm.tsb<-25) alerts.push({type:"danger",msg:`Form at ${tm.tsb} pts — deep fatigue. Reduce load before racing.`});
+  if(tm.tsb>25) alerts.push({type:"info",msg:`Form at +${tm.tsb} — very fresh. Good window to race or do a key session.`});
+  if(rc!==null&&rc<30) alerts.push({type:"danger",msg:`Recovery score ${rc}/100 — prioritise sleep and rest today.`});
+
+  // ── Goal calculations ──────────────────────────────────────────────────────
+  const goalDaysLeft=goal?.date?Math.ceil((new Date(goal.date).getTime()-Date.now())/86400000):null;
+  const goalFitnessPct=goal&&tm.ctl>0?Math.min(100,Math.round((tm.ctl/Math.max(tm.ctl,60))*100)):null;
 
   return (
     <div style={{ display:"flex",flexDirection:"column",gap:20 }} className="fade-up">
@@ -1375,15 +1509,15 @@ function DashboardPage({ profile, activities, metrics, onNavigate, onLogWellness
       {detail&&<ActivityDetailModal act={detail} profile={profile} onClose={()=>setDetail(null)} onEdit={()=>{}} onDelete={()=>{}} />}
 
       {/* Page title */}
-      <div className="op-dash-header" style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-end",borderBottom:"1px solid var(--border)",paddingBottom:18 }}>
+      <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1px solid var(--border)",paddingBottom:14 }}>
         <div>
-          <p style={{ fontSize:9,color:"var(--text-subtle)",letterSpacing:"0.18em",textTransform:"uppercase",marginBottom:4,fontFamily:"var(--font-mono)" }}>{fmtDate(new Date())}</p>
-          <h1 style={{ fontSize:26,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)",letterSpacing:"-0.02em" }}>
+          <p style={{ fontSize:8,color:"var(--text-subtle)",letterSpacing:"0.16em",textTransform:"uppercase",marginBottom:3,fontFamily:"var(--font-mono)" }}>{fmtDate(new Date())}</p>
+          <h1 style={{ fontSize:22,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)",letterSpacing:"-0.02em",lineHeight:1 }}>
             {getGreeting()}, {name}
           </h1>
         </div>
-        <div className="op-dash-actions" style={{ display:"flex",gap:8 }}>
-          <Btn size="sm" variant="outline" onClick={onLogWellness}>{metrics?"Update wellness":"+ Wellness"}</Btn>
+        <div style={{ display:"flex",gap:6 }}>
+          <Btn size="sm" variant="outline" onClick={onLogWellness}>{metrics?"Wellness":"+ Wellness"}</Btn>
           <Btn size="sm" onClick={()=>onNavigate("activities")}>+ Activity</Btn>
         </div>
       </div>
@@ -1411,6 +1545,81 @@ function DashboardPage({ profile, activities, metrics, onNavigate, onLogWellness
             <button onClick={onLogWellness} style={{ color:"var(--gold)",background:"none",border:"none",cursor:"pointer",fontSize:11,fontFamily:"var(--font-mono)",textDecoration:"underline",padding:0 }}>Log now →</button>
           </p>
         </div>
+      )}
+
+      {/* ── Load alerts ── */}
+      {alerts.filter((_,i)=>!dismissed.has(i)).length>0&&(
+        <div style={{ display:"flex",flexDirection:"column",gap:5 }}>
+          {alerts.map((a,i)=>{
+            if(dismissed.has(i)) return null;
+            const col=a.type==="danger"?"var(--terra)":a.type==="warning"?"var(--gold)":"var(--stone)";
+            return (
+              <div key={i} style={{ display:"flex",alignItems:"center",gap:10,padding:"8px 12px",background:"var(--surface)",border:`1px solid ${col}28`,borderLeft:`2px solid ${col}`,borderRadius:6 }}>
+                <svg width="11" height="11" viewBox="0 0 14 14" fill="none" style={{flexShrink:0}}>
+                  {a.type==="info"
+                    ?<><circle cx="7" cy="7" r="6" stroke={col} strokeWidth="1"/><line x1="7" y1="6" x2="7" y2="10" stroke={col} strokeWidth="1.2"/><circle cx="7" cy="4" r="0.8" fill={col}/></>
+                    :<><path d="M7 1L13 12H1L7 1Z" stroke={col} strokeWidth="1" strokeLinejoin="round"/><line x1="7" y1="5" x2="7" y2="8.5" stroke={col} strokeWidth="1.2"/><circle cx="7" cy="10.5" r="0.8" fill={col}/></>
+                  }
+                </svg>
+                <p style={{ fontSize:10,color:col,fontFamily:"var(--font-mono)",lineHeight:1.5,flex:1 }}>{a.msg}</p>
+                <button onClick={()=>dismiss(i)} style={{ flexShrink:0,width:18,height:18,borderRadius:3,border:"none",background:"transparent",cursor:"pointer",color:col,fontSize:12,display:"flex",alignItems:"center",justifyContent:"center",opacity:0.6,lineHeight:1 }}>×</button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── Goal widget (inline editor) ── */}
+      {!showGoalEditor&&goal&&(
+        <div style={{ display:"grid",gridTemplateColumns:"1fr auto auto",gap:1,background:"var(--border)",borderRadius:8,overflow:"hidden" }}>
+          <div style={{ background:"var(--surface)",padding:"12px 18px",display:"flex",gap:18,alignItems:"center",flexWrap:"wrap" }}>
+            <div>
+              <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:3 }}>Goal race</p>
+              <p style={{ fontSize:16,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)",lineHeight:1 }}>{goal.name}</p>
+              <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",marginTop:3 }}>{goal.distance}{goal.targetTime?` · target ${goal.targetTime}`:""}</p>
+            </div>
+            {goalDaysLeft!==null&&(
+              <div style={{ textAlign:"center",paddingLeft:18,borderLeft:"1px solid var(--border)" }}>
+                <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:3 }}>Countdown</p>
+                <p style={{ fontSize:26,fontWeight:300,fontFamily:"var(--font-display)",color:goalDaysLeft<14?"var(--terra)":goalDaysLeft<42?"var(--gold)":"var(--olive)",lineHeight:1 }}>{goalDaysLeft<0?"past":goalDaysLeft}</p>
+                <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)" }}>{goalDaysLeft<0?"days ago":"days"}</p>
+              </div>
+            )}
+            {goalFitnessPct!==null&&(
+              <div style={{ flex:1,minWidth:120 }}>
+                <div style={{ display:"flex",justifyContent:"space-between",marginBottom:5 }}>
+                  <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>Fitness readiness</p>
+                  <p style={{ fontSize:10,color:"var(--gold)",fontFamily:"var(--font-mono)",fontWeight:600 }}>{goalFitnessPct}%</p>
+                </div>
+                <div style={{ height:4,background:"var(--border)",borderRadius:3,overflow:"hidden" }}>
+                  <div style={{ height:"100%",width:`${goalFitnessPct}%`,background:`linear-gradient(90deg,var(--terra),var(--gold) 60%,var(--olive))`,borderRadius:3,transition:"width 0.6s ease" }} />
+                </div>
+                <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",marginTop:4 }}>CTL {tm.ctl} pts · {goalFitnessPct<50?"Build base":goalFitnessPct<80?"On track ✓":"Peak ready ✓"}</p>
+              </div>
+            )}
+          </div>
+          <div style={{ background:"var(--surface)",padding:"12px 14px",display:"flex",alignItems:"center",borderLeft:"1px solid var(--border)" }}>
+            <button onClick={()=>setShowGoalEditor(true)} style={{ fontSize:11,color:"var(--text-subtle)",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--font-mono)",letterSpacing:"0.06em",textTransform:"uppercase" }}>Edit</button>
+          </div>
+          <div style={{ background:"var(--surface)",padding:"12px 14px",display:"flex",alignItems:"center",borderLeft:"1px solid var(--border)" }}>
+            <button onClick={()=>onGoalChange(null)} style={{ fontSize:11,color:"var(--terra)",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--font-mono)",letterSpacing:"0.06em",textTransform:"uppercase" }}>Clear</button>
+          </div>
+        </div>
+      )}
+      {!showGoalEditor&&!goal&&(
+        <button onClick={()=>setShowGoalEditor(true)} style={{ display:"flex",alignItems:"center",gap:10,padding:"9px 16px",background:"transparent",border:"1px dashed var(--border-hi)",borderRadius:8,cursor:"pointer",color:"var(--text-subtle)",fontFamily:"var(--font-mono)",fontSize:12,letterSpacing:"0.06em",textTransform:"uppercase",width:"100%",transition:"border-color 0.15s,color 0.15s" }}>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="6" y1="1" x2="6" y2="11"/><line x1="1" y1="6" x2="11" y2="6"/></svg>
+          Set a goal race
+        </button>
+      )}
+      {showGoalEditor&&(
+        <Card p={16}>
+          <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14 }}>
+            <p style={{ fontSize:11,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"var(--font-mono)" }}>Goal race</p>
+            <button onClick={()=>setShowGoalEditor(false)} style={{ width:22,height:22,borderRadius:4,border:"1px solid var(--border)",background:"transparent",cursor:"pointer",color:"var(--text-muted)",fontSize:15,display:"flex",alignItems:"center",justifyContent:"center" }}>×</button>
+          </div>
+          <GoalEditor initial={goal} onSave={g=>{onGoalChange(g);setShowGoalEditor(false);}} />
+        </Card>
       )}
 
       {/* 4 metrics */}
@@ -1444,15 +1653,19 @@ function DashboardPage({ profile, activities, metrics, onNavigate, onLogWellness
               }>Fitness · Fatigue · Form</SectionTitle>
               {fitness.length>1?(
                 <ResponsiveContainer width="100%" height={190} className="op-chart-tall">
-                  <LineChart data={fitness} margin={{top:4,right:0,bottom:0,left:-22}}>
-                    <CartesianGrid strokeDasharray="1 8" stroke="var(--border)" />
+                  <LineChart data={fitness} margin={{top:8,right:4,bottom:0,left:-18}}>
+                    <defs>
+                      <linearGradient id="ctlg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--gold)" stopOpacity={0.12}/><stop offset="100%" stopColor="var(--gold)" stopOpacity={0}/></linearGradient>
+                      <linearGradient id="tsbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--olive)" stopOpacity={0.1}/><stop offset="100%" stopColor="var(--olive)" stopOpacity={0}/></linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="2 8" stroke="var(--border)" vertical={false} />
                     <XAxis dataKey="week" tick={{fill:"var(--text-subtle)",fontSize:9,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} />
                     <YAxis tick={{fill:"var(--text-subtle)",fontSize:9,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} />
-                    <ReferenceLine y={0} stroke="var(--border-hi)" strokeDasharray="2 4" />
-                    <Tooltip content={<OTooltip />} />
-                    <Line type="monotone" dataKey="ctl" stroke="var(--gold)" strokeWidth={1.5} dot={false} name="Fitness" />
-                    <Line type="monotone" dataKey="atl" stroke="var(--terra)" strokeWidth={1.5} dot={false} name="Fatigue" strokeDasharray="3 3" />
-                    <Line type="monotone" dataKey="tsb" stroke="var(--olive)" strokeWidth={1.5} dot={false} name="Form" />
+                    <ReferenceLine y={0} stroke="var(--border-hi)" strokeDasharray="3 4" strokeWidth={1} />
+                    <Tooltip content={<OTooltip />} cursor={{stroke:"var(--border-hi)",strokeWidth:1,strokeDasharray:"3 3"}} />
+                    <Line type="monotone" dataKey="ctl" stroke="var(--gold)" strokeWidth={2} dot={false} name="Fitness" />
+                    <Line type="monotone" dataKey="atl" stroke="var(--terra)" strokeWidth={1.5} dot={false} name="Fatigue" strokeDasharray="4 3" />
+                    <Line type="monotone" dataKey="tsb" stroke="var(--olive)" strokeWidth={2} dot={false} name="Form" />
                   </LineChart>
                 </ResponsiveContainer>
               ):<EmptyState label="Log activities to build your fitness curve" />}
@@ -1461,12 +1674,12 @@ function DashboardPage({ profile, activities, metrics, onNavigate, onLogWellness
               <SectionTitle mono sub="Daily load (TSS)">This week</SectionTitle>
               {bar.some(d=>d.tss>0)?(
                 <ResponsiveContainer width="100%" height={190} className="op-chart-tall">
-                  <BarChart data={bar} barSize={18} margin={{top:4,right:0,bottom:0,left:-22}}>
-                    <CartesianGrid strokeDasharray="1 8" stroke="var(--border)" vertical={false} />
+                  <BarChart data={bar} barSize={28} margin={{top:8,right:4,bottom:0,left:-18}} barCategoryGap="30%">
+                    <CartesianGrid strokeDasharray="2 6" stroke="var(--border)" vertical={false} />
                     <XAxis dataKey="day" tick={{fill:"var(--text-subtle)",fontSize:9,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} />
                     <YAxis tick={{fill:"var(--text-subtle)",fontSize:9,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} />
-                    <Tooltip content={<OTooltip />} />
-                    <Bar dataKey="tss" name="TSS" radius={[2,2,0,0]} fill="var(--gold)" opacity={0.7} />
+                    <Tooltip content={<OTooltip />} cursor={{fill:"var(--border)",opacity:0.4,radius:3}} />
+                    <Bar dataKey="tss" name="TSS" radius={[4,4,0,0]} fill="var(--gold)" opacity={0.85} />
                   </BarChart>
                 </ResponsiveContainer>
               ):<EmptyState label="No sessions this week" />}
@@ -1529,12 +1742,29 @@ function SportBreakdown({ activities }: { activities:Activity[] }) {
 
 // ─── AI COACH ────────────────────────────────────────────────────────────────
 
-function CoachPage({ activities, metrics, onLogWellness }: { activities:Activity[]; metrics:DailyMetrics|null; onLogWellness:()=>void }) {
+function CoachPage({ activities, metrics, wellnessHistory, onLogWellness }: { activities:Activity[]; metrics:DailyMetrics|null; wellnessHistory:DailyMetrics[]; onLogWellness:()=>void }) {
   const [loading,setLoading]=useState(false);
   const [rec,setRec]=useState<string|null>(null);
   const [extra,setExtra]=useState("");
+  const [trendMetric,setTrendMetric]=useState<"hrv"|"sleep"|"fatigue"|"recovery">("recovery");
   const rc=metrics?calcRec(metrics):null;
   const rcColor=!rc?"var(--text-muted)":rc>=70?"var(--olive)":rc>=50?"var(--gold)":"var(--terra)";
+
+  // Build trend chart data from history
+  const trendData=wellnessHistory.slice(-30).map(m=>({
+    date:m.date.slice(5),
+    hrv:m.hrv_ms??null,
+    sleep:m.sleep_hours??null,
+    fatigue:m.fatigue??null,
+    recovery:calcRec(m),
+  }));
+  const trendCfg:{[k:string]:{label:string;color:string;unit:string}} = {
+    recovery:{label:"Recovery score",color:"var(--olive)",unit:"/100"},
+    hrv:     {label:"HRV",          color:"var(--gold)", unit:"ms"},
+    sleep:   {label:"Sleep",        color:"var(--stone)",unit:"h"},
+    fatigue: {label:"Fatigue",      color:"var(--terra)",unit:"/10"},
+  };
+  const tc=trendCfg[trendMetric];
 
   const generate=async()=>{
     setLoading(true);
@@ -1554,78 +1784,110 @@ function CoachPage({ activities, metrics, onLogWellness }: { activities:Activity
   );
 
   return (
-    <div style={{ display:"flex",flexDirection:"column",gap:20 }}>
+    <div style={{ display:"flex",flexDirection:"column",gap:14 }}>
       <PageHeader supra="Intelligence" title="AI Coach" />
-      <div className="op-grid-2" style={{ display:"grid",gridTemplateColumns:"1fr 280px",gap:14,alignItems:"start" }}>
-        <div style={{ display:"flex",flexDirection:"column",gap:14 }}>
-          <Card p={22}>
-            <SectionTitle mono sub="From today's wellness log" right={<Btn size="sm" variant="outline" onClick={onLogWellness}>{metrics?"Update":"Log wellness"}</Btn>}>
-              Recovery status
-            </SectionTitle>
-            {metrics?(
-              <>
-                {statLine("HRV",metrics.hrv_ms?`${metrics.hrv_ms} ms`:null,metrics.hrv_ms?metrics.hrv_ms>=60:null)}
-                {statLine("Sleep",metrics.sleep_hours?`${metrics.sleep_hours} h`:null,metrics.sleep_hours?metrics.sleep_hours>=7.5:null)}
-                {statLine("Fatigue",metrics.fatigue?`${metrics.fatigue} / 10`:null,metrics.fatigue?metrics.fatigue<=4:null)}
-                {statLine("Motivation",metrics.motivation?`${metrics.motivation} / 10`:null,metrics.motivation?metrics.motivation>=6:null)}
-                {statLine("Resting HR",metrics.resting_hr?`${metrics.resting_hr} bpm`:null,metrics.resting_hr?metrics.resting_hr<=55:null)}
-                {metrics.notes&&<p style={{ fontSize:12,color:"var(--text-muted)",fontStyle:"italic",marginTop:10,lineHeight:1.6,fontFamily:"var(--font-display)" }}>&ldquo;{metrics.notes}&rdquo;</p>}
-              </>
-            ):(
-              <p style={{ fontSize:13,color:"var(--text-muted)",lineHeight:1.7,padding:"6px 0",fontFamily:"var(--font-display)",fontStyle:"italic" }}>
-                Log your morning wellness to unlock accurate AI coaching. The engine uses HRV, sleep quality, fatigue, and motivation to prescribe precise training.
-              </p>
-            )}
-          </Card>
-          <Card p={22}>
-            <SectionTitle mono>Additional context</SectionTitle>
-            <textarea value={extra} onChange={e=>setExtra(e.target.value)} placeholder="Race in 8 days · tight left calf · poor week of nutrition · travel fatigue…" style={{ width:"100%",minHeight:72,padding:"9px 12px",boxSizing:"border-box",resize:"vertical",marginBottom:14 }} />
-            <Btn onClick={generate} disabled={loading} fullWidth>{loading?"Generating recommendation…":"Get AI recommendation →"}</Btn>
+
+      {/* Top strip: recovery score + wellness stats inline */}
+      <div style={{ display:"grid",gridTemplateColumns:"auto 1fr auto",gap:1,background:"var(--border)",borderRadius:8,overflow:"hidden" }}>
+        {/* Score */}
+        <div style={{ background:"var(--surface)",padding:"14px 20px",display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center",minWidth:80 }}>
+          <div style={{ display:"flex",alignItems:"center",gap:4,marginBottom:4 }}>
+            <span style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.1em" }}>Recovery</span>
+            <HintIcon text="40% sleep · 30% HRV · 20% fatigue · 10% motivation" />
+          </div>
+          <span style={{ fontSize:32,fontWeight:300,color:rcColor,fontFamily:"var(--font-display)",letterSpacing:"-0.04em",lineHeight:1 }}>{rc??"-"}</span>
+          {rc&&<span style={{ fontSize:8,color:rcColor,fontFamily:"var(--font-mono)",marginTop:2 }}>{rc>=70?"READY":rc>=50?"CAREFUL":"REST"}</span>}
+        </div>
+        {/* Wellness inline stats */}
+        <div style={{ background:"var(--surface)",padding:"10px 16px",display:"flex",alignItems:"center",flexWrap:"wrap",gap:0 }}>
+          {metrics?[
+            {l:"HRV",v:metrics.hrv_ms?`${metrics.hrv_ms}ms`:null,good:metrics.hrv_ms?metrics.hrv_ms>=60:null},
+            {l:"Sleep",v:metrics.sleep_hours?`${metrics.sleep_hours}h`:null,good:metrics.sleep_hours?metrics.sleep_hours>=7.5:null},
+            {l:"Fatigue",v:metrics.fatigue?`${metrics.fatigue}/10`:null,good:metrics.fatigue?metrics.fatigue<=4:null},
+            {l:"Motivation",v:metrics.motivation?`${metrics.motivation}/10`:null,good:metrics.motivation?metrics.motivation>=6:null},
+            {l:"RHR",v:metrics.resting_hr?`${metrics.resting_hr}bpm`:null,good:metrics.resting_hr?metrics.resting_hr<=55:null},
+          ].map(({l,v,good})=>(
+            <div key={l} style={{ padding:"6px 14px",borderRight:"1px solid var(--border)" }}>
+              <p style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3 }}>{l}</p>
+              <p style={{ fontSize:14,fontWeight:300,fontFamily:"var(--font-display)",color:good===null?"var(--text)":good?"var(--olive)":"var(--terra)",lineHeight:1 }}>{v??"-"}</p>
+            </div>
+          )):(
+            <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",fontStyle:"italic",padding:"0 4px" }}>Log morning wellness to enable AI coaching</p>
+          )}
+        </div>
+        {/* Log button */}
+        <div style={{ background:"var(--surface)",padding:"10px 14px",display:"flex",alignItems:"center" }}>
+          <Btn size="sm" variant="outline" onClick={onLogWellness}>{metrics?"Update":"Log"}</Btn>
+        </div>
+      </div>
+
+      {/* Main area */}
+      <div style={{ display:"grid",gridTemplateColumns:"1fr 220px",gap:14,alignItems:"start" }}>
+        <div style={{ display:"flex",flexDirection:"column",gap:12 }}>
+          <Card p={16}>
+            <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"var(--font-mono)",marginBottom:10 }}>Additional context for AI</p>
+            <textarea value={extra} onChange={e=>setExtra(e.target.value)}
+              placeholder="Race in 8 days · tight calf · poor nutrition · travel fatigue…"
+              style={{ width:"100%",minHeight:60,padding:"8px 10px",boxSizing:"border-box",resize:"vertical",marginBottom:10,fontSize:12,fontFamily:"var(--font-mono)",background:"var(--bg)",border:"1px solid var(--border)",borderRadius:5,color:"var(--text)",lineHeight:1.6 }} />
+            <Btn onClick={generate} disabled={loading} fullWidth>{loading?"Generating…":"Get AI recommendation →"}</Btn>
           </Card>
           {rec&&(
             <InsightCard accent="var(--gold)" tag="AI Recommendation">
-              <div style={{}}><Markdown text={rec} size={14} /></div>
-              <button onClick={()=>setRec(null)} style={{ marginTop:14,fontSize:10,color:"var(--text-subtle)",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--font-mono)" }}>← New evaluation</button>
+              <Markdown text={rec} size={13} />
+              <button onClick={()=>setRec(null)} style={{ marginTop:12,fontSize:9,color:"var(--text-subtle)",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--font-mono)",letterSpacing:"0.04em" }}>← NEW EVALUATION</button>
             </InsightCard>
+          )}
+          {metrics?.notes&&(
+            <div style={{ padding:"10px 14px",background:"var(--surface)",borderRadius:6,borderLeft:"2px solid var(--border-hi)" }}>
+              <p style={{ fontSize:11,color:"var(--text-muted)",fontStyle:"italic",lineHeight:1.6,fontFamily:"var(--font-display)" }}>&ldquo;{metrics.notes}&rdquo;</p>
+            </div>
           )}
         </div>
 
+        {/* Sidebar: wellness trend + recent load */}
         <div style={{ display:"flex",flexDirection:"column",gap:12 }}>
-          <Card p={20}>
-            <div style={{ display:"flex",alignItems:"center",gap:5,marginBottom:14 }}>
-              <p style={{ fontSize:9,color:"var(--text-muted)",letterSpacing:"0.14em",textTransform:"uppercase",fontWeight:600,fontFamily:"var(--font-mono)" }}>Recovery score</p>
-              <HintIcon text="Composite: 40% sleep, 30% HRV, 20% fatigue, 10% motivation." />
+        {trendData.length>1&&(
+          <Card p={14}>
+            <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10 }}>
+              <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"var(--font-mono)" }}>30-day trend</p>
+              <div style={{ display:"flex",gap:2 }}>
+                {(["recovery","hrv","sleep","fatigue"] as const).map(m=>(
+                  <button key={m} onClick={()=>setTrendMetric(m)} style={{ padding:"3px 7px",borderRadius:3,border:`1px solid ${trendMetric===m?trendCfg[m].color:"var(--border)"}`,background:trendMetric===m?trendCfg[m].color+"15":"transparent",color:trendMetric===m?trendCfg[m].color:"var(--text-subtle)",fontSize:8,cursor:"pointer",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.04em" }}>{m==="recovery"?"REC":m.toUpperCase()}</button>
+                ))}
+              </div>
             </div>
-            <div style={{ display:"flex",alignItems:"baseline",gap:3,marginBottom:10 }}>
-              <span style={{ fontSize:40,fontWeight:300,color:rcColor,letterSpacing:"-0.05em",fontFamily:"var(--font-display)",lineHeight:1 }}>{rc??"-"}</span>
-              {rc&&<span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>/100</span>}
-            </div>
-            {rc&&(
-              <>
-                <div style={{ height:1,background:"var(--border)",borderRadius:1,marginBottom:8 }}>
-                  <div style={{ width:`${rc}%`,height:"100%",background:rcColor,transition:"width 0.6s cubic-bezier(0.16,1,0.3,1)" }} />
-                </div>
-                <p style={{ fontSize:11,color:rcColor,fontFamily:"var(--font-mono)" }}>
-                  {rc>=70?"ready to perform":rc>=50?"train with care":"prioritise rest"}
-                </p>
-              </>
-            )}
-            {!metrics&&<p style={{ fontSize:11,color:"var(--text-subtle)",fontFamily:"var(--font-mono)" }}>Log wellness to score</p>}
+            <p style={{ fontSize:9,color:tc.color,fontFamily:"var(--font-mono)",marginBottom:8 }}>{tc.label} · {tc.unit}</p>
+            <ResponsiveContainer width="100%" height={90}>
+              <AreaChart data={trendData} margin={{top:4,right:4,bottom:0,left:-28}}>
+                <defs>
+                  <linearGradient id="wg" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={tc.color} stopOpacity={0.25}/>
+                    <stop offset="100%" stopColor={tc.color} stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="2 6" stroke="var(--border)" vertical={false} />
+                <XAxis dataKey="date" tick={{fill:"var(--text-subtle)",fontSize:7,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} interval={6} />
+                <YAxis tick={{fill:"var(--text-subtle)",fontSize:7,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} reversed={trendMetric==="fatigue"} />
+                <Tooltip content={<OTooltip />} cursor={{stroke:"var(--border-hi)",strokeWidth:1,strokeDasharray:"2 2"}} />
+                <Area type="monotone" dataKey={trendMetric} stroke={tc.color} fill="url(#wg)" strokeWidth={1.5} dot={false} connectNulls name={tc.label} />
+              </AreaChart>
+            </ResponsiveContainer>
           </Card>
-          <Card p={20}>
-            <SectionTitle mono>Recent load</SectionTitle>
-            {activities.length===0?<EmptyState label="No data" />
-              :activities.slice(0,5).map((a,i)=>(
-                <div key={a.id} style={{ display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:i<4?"1px solid var(--border)":"none" }}>
-                  <div>
-                    <p style={{ fontSize:11,fontWeight:500,color:"var(--text)" }}>{a.title}</p>
-                    <p style={{ fontSize:9,color:"var(--text-muted)",fontFamily:"var(--font-mono)",marginTop:1 }}>{formatRelDate(a.date)}</p>
-                  </div>
-                  <span style={{ fontSize:13,fontWeight:300,color:tssColor(a.tss??0),fontFamily:"var(--font-display)" }}>{a.tss??"-"}</span>
+        )}
+        <Card p={14}>
+          <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"var(--font-mono)",marginBottom:10 }}>Recent load</p>
+          {activities.length===0?<EmptyState label="No data" />
+            :activities.slice(0,6).map((a,i)=>(
+              <div key={a.id} style={{ display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<5?"1px solid var(--border)":"none" }}>
+                <div style={{ minWidth:0,flex:1 }}>
+                  <p style={{ fontSize:11,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{a.title}</p>
+                  <p style={{ fontSize:9,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",marginTop:1 }}>{formatRelDate(a.date)}</p>
                 </div>
-              ))
-            }
-          </Card>
+                <span style={{ fontSize:13,fontWeight:300,color:tssColor(a.tss??0),fontFamily:"var(--font-display)",flexShrink:0,marginLeft:8 }}>{a.tss??"-"}</span>
+              </div>
+            ))
+          }
+        </Card>
         </div>
       </div>
     </div>
@@ -1652,36 +1914,46 @@ function FuelingPage({ profile }: { profile:Profile|null }) {
   const exportTxt=()=>{if(!plan)return;const lines=[`OLYMPEAKS FUELING PLAN`,`${p.duration}min · ${ILabels[p.intensity]} · ${p.temp}°C · ${p.weight}kg`,``,`Carbs: ${plan.carbs_per_hour}g/h · Fluid: ${plan.fluid_per_hour_ml}ml/h · Sodium: ${plan.sodium_per_hour_mg}mg/h`,``,`TIMELINE:`,  ...plan.schedule.map(s=>`${String(Math.floor(s.minute/60)).padStart(2,"0")}:${String(s.minute%60).padStart(2,"0")} — ${s.action}`),``,`NOTES:`,plan.ai_notes];const b=new Blob([lines.join("\n")],{type:"text/plain"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="fueling-plan.txt";a.click();};
 
   return (
-    <div style={{ display:"flex",flexDirection:"column",gap:20 }}>
+    <div style={{ display:"flex",flexDirection:"column",gap:14 }}>
       <PageHeader supra="Nutrition" title="Fueling Planner" />
       <div className="op-grid-2" style={{ display:"grid",gridTemplateColumns:"260px 1fr",gap:14,alignItems:"start" }}>
-        <Card p={20}>
-          <SectionTitle mono>Parameters</SectionTitle>
-          <div style={{ display:"flex",flexDirection:"column",gap:18 }}>
-            <Field label="Sport"><Sel value={p.sport} onChange={v=>setP(x=>({...x,sport:v}))} options={["running","cycling","triathlon","swimming"]} /></Field>
-            {([{label:"Duration",key:"duration" as const,min:30,max:360,step:15,unit:"min",hint:"Under 60 min rarely needs in-session fueling."},{label:"Body weight",key:"weight" as const,min:45,max:120,unit:"kg",hint:"Scales fluid and sodium requirements."},{label:"Temperature",key:"temp" as const,min:5,max:42,unit:"°C",hint:"Fluid needs +150ml/h for every 10°C above 20."}]).map(({label,key,min,max,step=1,unit,hint})=>(
+        <Card p={14}>
+          <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"var(--font-mono)",marginBottom:12 }}>Parameters</p>
+          <div style={{ display:"flex",flexDirection:"column",gap:14 }}>
+            {/* Sport */}
+            <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:5,alignItems:"center" }}>
+              <span style={{ fontSize:9,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.06em" }}>Sport</span>
+              <Sel value={p.sport} onChange={v=>setP(x=>({...x,sport:v}))} options={["running","cycling","triathlon","swimming"]} />
+            </div>
+            {/* Sliders */}
+            {([
+              {label:"Duration",key:"duration" as const,min:30,max:360,step:15,unit:"min",hint:"Under 60 min rarely needs in-session fueling."},
+              {label:"Weight",key:"weight" as const,min:45,max:120,unit:"kg",hint:"Scales fluid and sodium requirements."},
+              {label:"Temp",key:"temp" as const,min:5,max:42,unit:"°C",hint:"Fluid needs +150ml/h for every 10°C above 20."}
+            ]).map(({label,key,min,max,step=1,unit,hint})=>(
               <div key={key}>
-                <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8 }}>
-                  <div style={{ display:"flex",alignItems:"center",gap:4 }}>
-                    <label style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.06em" }}>{label}</label>
+                <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5 }}>
+                  <div style={{ display:"flex",alignItems:"center",gap:3 }}>
+                    <span style={{ fontSize:9,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.06em" }}>{label}</span>
                     <HintIcon text={hint} />
                   </div>
-                  <span style={{ fontSize:13,fontWeight:300,color:"var(--text)",fontFamily:"var(--font-display)" }}>{p[key]}<span style={{ fontSize:9,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",marginLeft:2 }}>{unit}</span></span>
+                  <span style={{ fontSize:13,fontWeight:300,color:"var(--text)",fontFamily:"var(--font-display)",lineHeight:1 }}>{p[key]}<span style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",marginLeft:2 }}>{unit}</span></span>
                 </div>
-                <input type="range" min={min} max={max} step={step} value={p[key]} onChange={e=>setP(x=>({...x,[key]:parseInt(e.target.value)}))} style={{ width:"100%" }} />
+                <input type="range" min={min} max={max} step={step} value={p[key]} onChange={e=>setP(x=>({...x,[key]:parseInt(e.target.value)}))} style={{ width:"100%",accentColor:"var(--gold)" }} />
               </div>
             ))}
+            {/* Intensity */}
             <div>
-              <p style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:8 }}>Intensity</p>
-              <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:5 }}>
+              <p style={{ fontSize:9,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6 }}>Intensity</p>
+              <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:4 }}>
                 {(["easy","moderate","hard","race"] as IL[]).map(i=>(
-                  <button key={i} onClick={()=>setP(x=>({...x,intensity:i}))} style={{ padding:"7px 0",borderRadius:5,cursor:"pointer",fontSize:10,border:`1px solid ${p.intensity===i?"var(--gold)":"var(--border)"}`,background:p.intensity===i?"var(--gold-dim)":"transparent",color:p.intensity===i?"var(--gold)":"var(--text-muted)",fontFamily:"var(--font-mono)",letterSpacing:"0.04em",textTransform:"uppercase" }}>
+                  <button key={i} onClick={()=>setP(x=>({...x,intensity:i}))} style={{ padding:"6px 0",borderRadius:4,cursor:"pointer",fontSize:9,border:`1px solid ${p.intensity===i?"var(--gold)":"var(--border)"}`,background:p.intensity===i?"var(--gold-dim)":"transparent",color:p.intensity===i?"var(--gold)":"var(--text-muted)",fontFamily:"var(--font-mono)",letterSpacing:"0.04em",textTransform:"uppercase" }}>
                     {ILabels[i]}
                   </button>
                 ))}
               </div>
             </div>
-            <Btn onClick={gen} disabled={loading} fullWidth>{loading?"Calculating…":"Generate plan →"}</Btn>
+            <Btn onClick={gen} disabled={loading} fullWidth>{loading?"Calculating…":"Generate →"}</Btn>
           </div>
         </Card>
 
@@ -1752,13 +2024,17 @@ function AnalysisPage({ activities }: { activities:Activity[] }) {
   const exportCSV=()=>{const rows=[["Date","Title","Sport","Type","Duration(min)","Distance(km)","Elevation(m)","Avg HR","TSS","Feel","Notes"],...activities.map(a=>[a.date,a.title,a.sport,a.type??"",a.duration_seconds?Math.round(a.duration_seconds/60):"",a.distance_meters?(a.distance_meters/1000).toFixed(2):"",a.elevation_gain??"",a.avg_heart_rate??"",a.tss??"",a.feel_score??"",a.notes?.replace(/,/g,";")??""])];const csv=rows.map(r=>r.join(",")).join("\n");const b=new Blob([csv],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="olympeaks-activities.csv";a.click();};
 
   return (
-    <div style={{ display:"flex",flexDirection:"column",gap:20 }}>
-      <PageHeader supra="Performance" title="Analysis" action={
-        <div style={{ display:"flex",gap:8 }}>
-          <Btn size="sm" variant="outline" onClick={exportCSV}>↓ CSV</Btn>
-          <Btn onClick={run} disabled={loading||!activities.length}>{loading?"Analysing…":"AI Analysis →"}</Btn>
+    <div style={{ display:"flex",flexDirection:"column",gap:14 }}>
+      <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1px solid var(--border)",paddingBottom:14 }}>
+        <div>
+          <p style={{ fontSize:8,color:"var(--text-subtle)",letterSpacing:"0.16em",textTransform:"uppercase",marginBottom:3,fontFamily:"var(--font-mono)" }}>Performance</p>
+          <h1 style={{ fontSize:22,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)",letterSpacing:"-0.02em",lineHeight:1 }}>Analysis</h1>
         </div>
-      } />
+        <div style={{ display:"flex",gap:6 }}>
+          <Btn size="sm" variant="ghost" onClick={exportCSV}>↓ CSV</Btn>
+          <Btn size="sm" onClick={run} disabled={loading||!activities.length}>{loading?"Analysing…":"AI Analysis →"}</Btn>
+        </div>
+      </div>
       {analysis&&<InsightCard accent="var(--olive)" tag="Performance Intelligence"><div style={{}}><Markdown text={analysis} size={13} /></div><button onClick={()=>setAnalysis(null)} style={{ marginTop:14,fontSize:10,color:"var(--text-subtle)",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--font-mono)" }}>← close</button></InsightCard>}
 
       <Card p={20}>
@@ -1771,12 +2047,14 @@ function AnalysisPage({ activities }: { activities:Activity[] }) {
         }>Training load history</SectionTitle>
         {tssChart.length>1?(
           <ResponsiveContainer width="100%" height={160}>
-            <BarChart data={tssChart} barSize={period>6?10:16} margin={{top:4,right:0,bottom:0,left:-22}}>
-              <CartesianGrid strokeDasharray="1 8" stroke="var(--border)" vertical={false} />
-              <XAxis dataKey="week" tick={{fill:"var(--text-subtle)",fontSize:9,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} />
+            <BarChart data={tssChart} barSize={period>12?8:period>6?12:20} margin={{top:8,right:4,bottom:0,left:-18}} barCategoryGap="25%">
+              <CartesianGrid strokeDasharray="2 8" stroke="var(--border)" vertical={false} />
+              <XAxis dataKey="week" tick={{fill:"var(--text-subtle)",fontSize:9,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} interval={period>12?2:0} />
               <YAxis tick={{fill:"var(--text-subtle)",fontSize:9,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} />
-              <Tooltip content={<OTooltip />} />
-              <Bar dataKey="tss" name="Weekly TSS" radius={[2,2,0,0]} fill="var(--gold)" opacity={0.65} />
+              <Tooltip content={<OTooltip />} cursor={{fill:"var(--border)",opacity:0.35,radius:3}} />
+              <Bar dataKey="tss" name="Weekly TSS" radius={[3,3,0,0]} fill="var(--gold)" opacity={0.8}>
+                {tssChart.map((_,i)=><Cell key={i} fill={i===tssChart.length-1?"var(--gold)":"var(--gold)"} fillOpacity={i===tssChart.length-1?1:0.65} />)}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         ):<EmptyState label="Log activities to see training load history" />}
@@ -1787,13 +2065,18 @@ function AnalysisPage({ activities }: { activities:Activity[] }) {
           <SectionTitle mono sub="Running · min/km">Pace trend</SectionTitle>
           {pace.length>1?(
             <ResponsiveContainer width="100%" height={170}>
-              <AreaChart data={pace} margin={{top:4,right:0,bottom:0,left:-22}}>
-                <defs><linearGradient id="pg" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="var(--olive)" stopOpacity={0.15}/><stop offset="95%" stopColor="var(--olive)" stopOpacity={0}/></linearGradient></defs>
-                <CartesianGrid strokeDasharray="1 8" stroke="var(--border)" />
+              <AreaChart data={pace} margin={{top:8,right:4,bottom:0,left:-18}}>
+                <defs>
+                  <linearGradient id="pg" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--olive)" stopOpacity={0.22}/>
+                    <stop offset="100%" stopColor="var(--olive)" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="2 8" stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="label" tick={{fill:"var(--text-subtle)",fontSize:9,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} />
-                <YAxis tick={{fill:"var(--text-subtle)",fontSize:9,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} />
-                <Tooltip content={<OTooltip />} />
-                <Area type="monotone" dataKey="pace" stroke="var(--olive)" fill="url(#pg)" strokeWidth={1.5} name="Pace (min/km)" />
+                <YAxis tick={{fill:"var(--text-subtle)",fontSize:9,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} reversed />
+                <Tooltip content={<OTooltip />} cursor={{stroke:"var(--border-hi)",strokeWidth:1,strokeDasharray:"3 3"}} />
+                <Area type="monotone" dataKey="pace" stroke="var(--olive)" fill="url(#pg)" strokeWidth={2} dot={{fill:"var(--olive)",r:3,strokeWidth:0}} activeDot={{r:5,fill:"var(--olive)",strokeWidth:0}} name="Pace (min/km)" />
               </AreaChart>
             </ResponsiveContainer>
           ):<EmptyState label="Log running sessions" />}
@@ -1804,10 +2087,10 @@ function AnalysisPage({ activities }: { activities:Activity[] }) {
             <HintIcon text="Multi-dimensional estimate from training distribution and volume" />
           </div>
           <ResponsiveContainer width="100%" height={170}>
-            <RadarChart data={radar} margin={{top:0,right:20,bottom:0,left:20}}>
-              <PolarGrid stroke="var(--border)" />
-              <PolarAngleAxis dataKey="attr" tick={{fill:"var(--text-muted)",fontSize:9,fontFamily:"var(--font-mono)"}} />
-              <Radar name="Profile" dataKey="val" stroke="var(--gold)" fill="var(--gold)" fillOpacity={0.08} strokeWidth={1.5} />
+            <RadarChart data={radar} margin={{top:4,right:24,bottom:4,left:24}}>
+              <PolarGrid stroke="var(--border)" strokeDasharray="2 4" gridType="polygon" />
+              <PolarAngleAxis dataKey="attr" tick={{fill:"var(--text-muted)",fontSize:9,fontFamily:"var(--font-mono)",fontWeight:600}} />
+              <Radar name="Profile" dataKey="val" stroke="var(--gold)" fill="var(--gold)" fillOpacity={0.12} strokeWidth={2} dot={{fill:"var(--gold)",r:3,strokeWidth:0}} />
             </RadarChart>
           </ResponsiveContainer>
         </Card>
@@ -1844,30 +2127,78 @@ function AnalysisPage({ activities }: { activities:Activity[] }) {
 
 // ─── RACES ───────────────────────────────────────────────────────────────────
 
-function RacesPage({ activities, profile }: { activities:Activity[]; profile:Profile|null }) {
+function RacesPage({ activities, profile, goal, onGoalChange }: { activities:Activity[]; profile:Profile|null; goal:GoalData|null; onGoalChange:(g:GoalData|null)=>void }) {
   const races=activities.filter(a=>a.type==="race");
   const [sel,setSel]=useState<Activity|null>(null);
   const [detail,setDetail]=useState<Activity|null>(null);
   const [analysis,setAnalysis]=useState<string|null>(null);
   const [loading,setLoading]=useState(false);
+  const [showGoalEditor,setShowGoalEditor]=useState(false);
   const analyze=async(race:Activity)=>{setLoading(true);try{const d=await fetch("/api/ai/race",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({activity_id:race.id})}).then(r=>r.json());setAnalysis(d.analysis??d.error);}catch{setAnalysis("Could not connect to AI.");}finally{setLoading(false);}};
   const sc=(r:Activity)=>sportColor(r.sport);
 
   return (
-    <div style={{ display:"flex",flexDirection:"column",gap:20 }}>
+    <div style={{ display:"flex",flexDirection:"column",gap:14 }}>
       {detail&&<ActivityDetailModal act={detail} profile={profile} onClose={()=>setDetail(null)} onEdit={()=>{}} onDelete={()=>{}} />}
-      <PageHeader supra="Competition" title="Race Analyzer" />
-      {races.length>0&&(
-        <div className="op-grid-3" style={{ display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:1,background:"var(--border)",borderRadius:10,overflow:"hidden",border:"1px solid var(--border)" }}>
-          {[{label:"Total races",value:String(races.length),accent:"var(--gold)"},{label:"Race distance",value:fmtDist(races.reduce((s,r)=>s+(r.distance_meters??0),0),"running"),accent:"var(--terra)"},{label:"Best feel",value:races.reduce((m,r)=>Math.max(m,r.feel_score??0),0)?`★ ${races.reduce((m,r)=>Math.max(m,r.feel_score??0),0)}`:"-",accent:"var(--olive)"}].map((m,i)=>(
-            <div key={i} style={{ background:"var(--surface)",padding:"16px 20px",position:"relative" }}>
-              <div style={{ position:"absolute",top:0,left:0,right:0,height:2,background:m.accent }} />
-              <p style={{ fontSize:9,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:8,fontFamily:"var(--font-mono)" }}>{m.label}</p>
-              <p style={{ fontSize:20,fontWeight:300,fontFamily:"var(--font-display)",color:"var(--text)" }}>{m.value}</p>
+      {/* Compact header + stats inline */}
+      <div style={{ display:"flex",alignItems:"center",gap:1,background:"var(--border)",borderRadius:8,overflow:"hidden" }}>
+        <div style={{ background:"var(--surface)",padding:"12px 18px",flex:1 }}>
+          <p style={{ fontSize:8,color:"var(--text-subtle)",letterSpacing:"0.16em",textTransform:"uppercase",marginBottom:3,fontFamily:"var(--font-mono)" }}>Competition</p>
+          <p style={{ fontSize:18,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)",lineHeight:1 }}>Race Analyzer</p>
+        </div>
+        {races.length>0&&[
+          {label:"Races",value:String(races.length),accent:"var(--gold)"},
+          {label:"Distance",value:fmtDist(races.reduce((s,r)=>s+(r.distance_meters??0),0),"running"),accent:"var(--terra)"},
+          {label:"Best feel",value:races.reduce((m,r)=>Math.max(m,r.feel_score??0),0)?`★ ${races.reduce((m,r)=>Math.max(m,r.feel_score??0),0)}`:"-",accent:"var(--olive)"},
+        ].map((m,i)=>(
+          <div key={i} style={{ background:"var(--surface)",padding:"12px 18px",position:"relative",borderLeft:"1px solid var(--border)" }}>
+            <div style={{ position:"absolute",top:0,left:0,right:0,height:2,background:m.accent }} />
+            <p style={{ fontSize:8,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4,fontFamily:"var(--font-mono)" }}>{m.label}</p>
+            <p style={{ fontSize:16,fontWeight:300,fontFamily:"var(--font-display)",color:"var(--text)",lineHeight:1 }}>{m.value}</p>
+          </div>
+        ))}
+      </div>
+      {/* ── Goal race ── */}
+      {!showGoalEditor&&goal&&(
+        <div style={{ display:"grid",gridTemplateColumns:"1fr auto auto",gap:1,background:"var(--border)",borderRadius:8,overflow:"hidden" }}>
+          <div style={{ background:"var(--surface)",padding:"11px 16px",display:"flex",gap:16,alignItems:"center",flexWrap:"wrap" }}>
+            <div>
+              <p style={{ fontSize:8,color:"var(--gold)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:2 }}>🎯 Goal race</p>
+              <p style={{ fontSize:14,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)",lineHeight:1 }}>{goal.name}</p>
+              <p style={{ fontSize:9,color:"var(--text-muted)",fontFamily:"var(--font-mono)",marginTop:2 }}>{goal.distance}{goal.targetTime?` · target ${goal.targetTime}`:""}</p>
             </div>
-          ))}
+            {goal.date&&(()=>{const d=Math.ceil((new Date(goal.date).getTime()-Date.now())/86400000);return(
+              <div style={{ paddingLeft:16,borderLeft:"1px solid var(--border)",textAlign:"center" }}>
+                <p style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:2 }}>Countdown</p>
+                <p style={{ fontSize:20,fontWeight:300,fontFamily:"var(--font-display)",color:d<14?"var(--terra)":d<42?"var(--gold)":"var(--olive)",lineHeight:1 }}>{d<0?"past":d}</p>
+                <p style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)" }}>{d<0?"days ago":"days"}</p>
+              </div>
+            );})()}
+          </div>
+          <div style={{ background:"var(--surface)",padding:"11px 12px",display:"flex",alignItems:"center",borderLeft:"1px solid var(--border)" }}>
+            <button onClick={()=>setShowGoalEditor(true)} style={{ fontSize:9,color:"var(--text-subtle)",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--font-mono)",letterSpacing:"0.06em",textTransform:"uppercase" }}>Edit</button>
+          </div>
+          <div style={{ background:"var(--surface)",padding:"11px 12px",display:"flex",alignItems:"center",borderLeft:"1px solid var(--border)" }}>
+            <button onClick={()=>onGoalChange(null)} style={{ fontSize:9,color:"var(--terra)",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--font-mono)",letterSpacing:"0.06em",textTransform:"uppercase" }}>Clear</button>
+          </div>
         </div>
       )}
+      {!showGoalEditor&&!goal&&(
+        <button onClick={()=>setShowGoalEditor(true)} style={{ display:"flex",alignItems:"center",gap:10,padding:"9px 16px",background:"transparent",border:"1px dashed var(--border-hi)",borderRadius:8,cursor:"pointer",color:"var(--text-subtle)",fontFamily:"var(--font-mono)",fontSize:10,letterSpacing:"0.06em",textTransform:"uppercase",width:"100%",transition:"border-color 0.15s,color 0.15s" }}>
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="6" y1="1" x2="6" y2="11"/><line x1="1" y1="6" x2="11" y2="6"/></svg>
+          Set a goal race
+        </button>
+      )}
+      {showGoalEditor&&(
+        <Card p={16}>
+          <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14 }}>
+            <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"var(--font-mono)" }}>Goal race</p>
+            <button onClick={()=>setShowGoalEditor(false)} style={{ width:22,height:22,borderRadius:4,border:"1px solid var(--border)",background:"transparent",cursor:"pointer",color:"var(--text-muted)",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center" }}>×</button>
+          </div>
+          <GoalEditor initial={goal} onSave={g=>{onGoalChange(g);setShowGoalEditor(false);}} />
+        </Card>
+      )}
+
       {races.length===0?(
         <Card style={{ textAlign:"center" }} p={52}><EmptyState label="Log a session with type 'race' to analyse it here" /></Card>
       ):(
@@ -1880,27 +2211,25 @@ function RacesPage({ activities, profile }: { activities:Activity[]; profile:Pro
               <Card key={r.id} p={0} style={{ cursor:"pointer",border:`1px solid ${isSelected?"var(--gold)":"var(--border)"}`,transition:"border-color 0.15s",overflow:"hidden" }}>
                 <div style={{ display:"grid",gridTemplateColumns:"4px 1fr",height:"100%" }}>
                   <div style={{ background:isSelected?"var(--gold)":c+"40" }} />
-                  <div style={{ padding:"14px 18px" }}>
-                    <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12,flexWrap:"wrap" }}>
-                      <div style={{ display:"flex",gap:12,alignItems:"center" }} onClick={()=>setDetail(r)}>
-                        <div style={{ width:36,height:36,borderRadius:8,background:c+"12",border:"1px solid "+c+"22",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
-                          <SportIcon sport={r.sport} color={c} size={15} />
+                  <div style={{ padding:"10px 14px" }}>
+                    <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,flexWrap:"wrap" }}>
+                      <div style={{ display:"flex",gap:10,alignItems:"center",flex:1,minWidth:0 }} onClick={()=>setDetail(r)}>
+                        <div style={{ width:30,height:30,borderRadius:6,background:c+"12",border:"1px solid "+c+"22",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+                          <SportIcon sport={r.sport} color={c} size={12} />
                         </div>
-                        <div>
-                          <p style={{ fontSize:14,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)",marginBottom:3,lineHeight:1.2 }}>{r.title}</p>
-                          <p style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{r.date} · {fmtDist(r.distance_meters,r.sport)} · {fmtDuration(r.duration_seconds)}</p>
+                        <div style={{ minWidth:0 }}>
+                          <p style={{ fontSize:13,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)",marginBottom:2,lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{r.title}</p>
+                          <p style={{ fontSize:9,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{r.date} · {fmtDist(r.distance_meters,r.sport)} · {fmtDuration(r.duration_seconds)}</p>
                         </div>
                       </div>
-                      {/* Quick stats */}
-                      <div style={{ display:"flex",gap:20,alignItems:"center",flexWrap:"wrap" }}>
-                        {r.avg_heart_rate&&<div style={{ textAlign:"right" }}><p style={{ fontSize:9,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3 }}>avg hr</p><p style={{ fontSize:14,fontWeight:300,fontFamily:"var(--font-display)",color:"var(--text)" }}>{r.avg_heart_rate} bpm</p></div>}
-                        {r.avg_pace_sec_km&&<div style={{ textAlign:"right" }}><p style={{ fontSize:9,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3 }}>pace</p><p style={{ fontSize:14,fontWeight:300,fontFamily:"var(--font-display)",color:"var(--olive)" }}>{fmtPace(r.avg_pace_sec_km)}/km</p></div>}
-                        {r.tss&&<div style={{ textAlign:"right" }}><p style={{ fontSize:9,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3 }}>tss</p><p style={{ fontSize:14,fontWeight:300,fontFamily:"var(--font-display)",color:tssColor(r.tss) }}>{r.tss}</p></div>}
-                        {r.feel_score&&<div style={{ textAlign:"right" }}><p style={{ fontSize:9,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3 }}>feel</p><p style={{ fontSize:14,fontWeight:300,fontFamily:"var(--font-display)",color:"var(--gold)" }}>★{r.feel_score}</p></div>}
-                        {/* Action buttons */}
-                        <div style={{ display:"flex",gap:6,marginLeft:8 }}>
-                          <button onClick={()=>setDetail(r)} style={{ padding:"6px 12px",borderRadius:5,cursor:"pointer",fontSize:10,border:"1px solid var(--border)",background:"transparent",color:"var(--text-muted)",fontFamily:"var(--font-mono)",letterSpacing:"0.04em" }}>Detail →</button>
-                          <button onClick={()=>{setSel(r);setAnalysis(null);analyze(r);}} style={{ padding:"6px 12px",borderRadius:5,cursor:"pointer",fontSize:10,border:`1px solid ${isSelected?"var(--gold)":"var(--border)"}`,background:isSelected?"var(--gold-dim)":"transparent",color:isSelected?"var(--gold)":"var(--text-muted)",fontFamily:"var(--font-mono)",letterSpacing:"0.04em" }}>{loading&&sel?.id===r.id?"Analysing…":"AI →"}</button>
+                      <div style={{ display:"flex",gap:14,alignItems:"center",flexShrink:0 }}>
+                        {r.avg_pace_sec_km&&<div><p style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:1 }}>pace</p><p style={{ fontSize:13,fontWeight:300,fontFamily:"var(--font-display)",color:"var(--olive)",lineHeight:1 }}>{fmtPace(r.avg_pace_sec_km)}</p></div>}
+                        {r.avg_heart_rate&&<div><p style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:1 }}>hr</p><p style={{ fontSize:13,fontWeight:300,fontFamily:"var(--font-display)",color:"var(--text)",lineHeight:1 }}>{r.avg_heart_rate}</p></div>}
+                        {r.tss&&<div><p style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:1 }}>tss</p><p style={{ fontSize:13,fontWeight:300,fontFamily:"var(--font-display)",color:tssColor(r.tss),lineHeight:1 }}>{r.tss}</p></div>}
+                        {r.feel_score&&<div><p style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:1 }}>feel</p><p style={{ fontSize:13,fontWeight:300,fontFamily:"var(--font-display)",color:"var(--gold)",lineHeight:1 }}>★{r.feel_score}</p></div>}
+                        <div style={{ display:"flex",gap:4 }}>
+                          <button onClick={()=>setDetail(r)} style={{ padding:"5px 10px",borderRadius:4,cursor:"pointer",fontSize:9,border:"1px solid var(--border)",background:"transparent",color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>Detail</button>
+                          <button onClick={()=>{setSel(r);setAnalysis(null);analyze(r);}} style={{ padding:"5px 10px",borderRadius:4,cursor:"pointer",fontSize:9,border:`1px solid ${isSelected?"var(--gold)":"var(--border)"}`,background:isSelected?"var(--gold-dim)":"transparent",color:isSelected?"var(--gold)":"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{loading&&sel?.id===r.id?"…":"AI"}</button>
                         </div>
                       </div>
                     </div>
@@ -2625,6 +2954,8 @@ export function AppShell() {
   const [profile,setProfile]=useState<Profile|null>(null);
   const [activities,setActivities]=useState<Activity[]>([]);
   const [todayMetrics,setTodayMetrics]=useState<DailyMetrics|null>(null);
+  const [wellnessHistory,setWellnessHistory]=useState<DailyMetrics[]>([]);
+  const [goal,setGoal]=useState<{name:string;date:string;distance:string;targetTime:string}|null>(null);
   const [loading,setLoading]=useState(true);
   const [wellnessOpen,setWellnessOpen]=useState(false);
   const [wellnessSaving,setWellnessSaving]=useState(false);
@@ -2635,14 +2966,19 @@ export function AppShell() {
     try {
       const {data:{user}}=await supabase.auth.getUser();
       if(!user){router.push("/login");return;}
-      const [{data:prof},{data:acts},{data:met}]=await Promise.all([
+      const cutoff30=new Date(Date.now()-30*86400000).toISOString().split("T")[0];
+      const [{data:prof},{data:acts},{data:met},{data:hist}]=await Promise.all([
         supabase.from("profiles").select("*").eq("id",user.id).single(),
         supabase.from("activities").select("*").eq("user_id",user.id).order("date",{ascending:false}).limit(200),
         supabase.from("daily_metrics").select("*").eq("user_id",user.id).eq("date",new Date().toISOString().split("T")[0]).single(),
+        supabase.from("daily_metrics").select("*").eq("user_id",user.id).gte("date",cutoff30).order("date",{ascending:true}),
       ]);
       setProfile(prof as Profile??null);
       setActivities((acts as Activity[])??[]);
       setTodayMetrics(met as DailyMetrics??null);
+      setWellnessHistory((hist as DailyMetrics[])??[]);
+      // Load goal from localStorage
+      try { const g=localStorage.getItem("op-goal"); if(g) setGoal(JSON.parse(g)); } catch {}
     } finally { setLoading(false); }
   },[supabase,router]);
 
@@ -2716,11 +3052,11 @@ export function AppShell() {
             </div>
           ):(() => {
             switch(page){
-              case "dashboard":  return <DashboardPage profile={profile} activities={activities} metrics={todayMetrics} onNavigate={setPage} onLogWellness={()=>setWellnessOpen(true)} />;
-              case "coach":      return <CoachPage activities={activities} metrics={todayMetrics} onLogWellness={()=>setWellnessOpen(true)} />;
+              case "dashboard":  return <DashboardPage profile={profile} activities={activities} metrics={todayMetrics} goal={goal} onGoalChange={g=>{setGoal(g);try{if(g)localStorage.setItem("op-goal",JSON.stringify(g));else localStorage.removeItem("op-goal");}catch{}}} onNavigate={setPage} onLogWellness={()=>setWellnessOpen(true)} />;
+              case "coach":      return <CoachPage activities={activities} metrics={todayMetrics} wellnessHistory={wellnessHistory} onLogWellness={()=>setWellnessOpen(true)} />;
               case "fueling":    return <FuelingPage profile={profile} />;
               case "analysis":   return <AnalysisPage activities={activities} />;
-              case "races":      return <RacesPage activities={activities} profile={profile} />;
+              case "races":      return <RacesPage activities={activities} profile={profile} goal={goal} onGoalChange={g=>{setGoal(g);try{if(g)localStorage.setItem("op-goal",JSON.stringify(g));else localStorage.removeItem("op-goal");}catch{}}} />;
               case "activities": return <ActivitiesPage activities={activities} profile={profile} onRefresh={load} />;
               case "sync":       return <SyncPage onRefresh={load} />;
               case "profile":    return <ProfilePage profile={profile} onSaved={load} />;
