@@ -12,7 +12,6 @@ import { tssColor, sportColor, formColor, getFormLabel } from "@/lib/design";
 import type { Profile, Activity, DailyMetrics, TrainingMetrics } from "@/lib/types";
 
 // ─── GREEK GEOMETRY ICONS ─────────────────────────────────────────────────────
-// Each icon is a minimal SVG built on classical geometry principles
 
 function IconDashboard({ size=16, active=false }: { size?:number; active?:boolean }) {
   return (
