@@ -1,5 +1,64 @@
 "use client";
 
+// ─── MARKDOWN RENDERER ───────────────────────────────────────────────────────
+// Lightweight — no deps. Handles: **bold**, *italic*, `code`, # headers,
+// - bullets, 1. lists, > blockquote, code blocks, ---, [links](url)
+
+function Markdown({ text, size=13, color="var(--text-2)" }: { text:string; size?:number; color?:string }) {
+  if (!text) return null;
+  const lines = text.split("\n");
+  const els: React.ReactNode[] = [];
+  let i = 0, k = 0;
+
+  function inline(raw: string): React.ReactNode[] {
+    const out: React.ReactNode[] = [];
+    let s = raw, ki = 0;
+    while (s.length) {
+      const bim = s.match(/^(.*?)\*{3}(.+?)\*{3}/);
+      if (bim) { if(bim[1]) out.push(bim[1]); out.push(<strong key={ki++} style={{fontStyle:"italic"}}>{bim[2]}</strong>); s=s.slice(bim[0].length); continue; }
+      const bm = s.match(/^(.*?)\*{2}(.+?)\*{2}/);
+      if (bm) { if(bm[1]) out.push(bm[1]); out.push(<strong key={ki++} style={{color:"var(--text)",fontWeight:600}}>{bm[2]}</strong>); s=s.slice(bm[0].length); continue; }
+      const im = s.match(/^(.*?)(?<![\*])\*(?![\*])(.+?)(?<![\*])\*(?![\*])/);
+      if (im) { if(im[1]) out.push(im[1]); out.push(<em key={ki++} style={{fontStyle:"italic",opacity:0.85}}>{im[2]}</em>); s=s.slice(im[0].length); continue; }
+      const cm = s.match(/^(.*?)`(.+?)`/);
+      if (cm) { if(cm[1]) out.push(cm[1]); out.push(<code key={ki++} style={{fontFamily:"var(--font-mono)",fontSize:"0.85em",background:"var(--surface-hi)",color:"var(--gold)",padding:"1px 5px",borderRadius:3,border:"1px solid var(--border)"}}>{cm[2]}</code>); s=s.slice(cm[0].length); continue; }
+      const lm = s.match(/^(.*?)\[(.+?)\]\((.+?)\)/);
+      if (lm) { if(lm[1]) out.push(lm[1]); out.push(<a key={ki++} href={lm[3]} target="_blank" rel="noopener noreferrer" style={{color:"var(--gold)",textDecoration:"underline",textDecorationColor:"var(--gold)40"}}>{lm[2]}</a>); s=s.slice(lm[0].length); continue; }
+      out.push(s); break;
+    }
+    return out;
+  }
+
+  while (i < lines.length) {
+    const l = lines[i];
+    if (l.trim() === "") { els.push(<div key={k++} style={{height:6}} />); i++; continue; }
+    if (/^[-*_]{3,}$/.test(l.trim())) { els.push(<div key={k++} style={{height:1,background:"linear-gradient(90deg,transparent,var(--border),var(--gold)40,var(--border),transparent)",margin:"12px 0",opacity:0.5}} />); i++; continue; }
+    if (l.startsWith("```")) {
+      const code: string[] = []; i++;
+      while (i < lines.length && !lines[i].startsWith("```")) { code.push(lines[i]); i++; }
+      els.push(<pre key={k++} style={{fontFamily:"var(--font-mono)",fontSize:11,background:"var(--surface-hi)",border:"1px solid var(--border)",borderRadius:6,padding:"10px 14px",overflowX:"auto",color:"var(--text-muted)",lineHeight:1.6,margin:"8px 0"}}>{code.join("\n")}</pre>); i++; continue;
+    }
+    const h1=l.match(/^#\s+(.+)/); if(h1){ els.push(<h3 key={k++} style={{fontFamily:"var(--font-display)",fontStyle:"italic",fontSize:size+5,fontWeight:300,color:"var(--text)",letterSpacing:"-0.02em",margin:"14px 0 4px",lineHeight:1.2}}>{inline(h1[1])}</h3>); i++; continue; }
+    const h2=l.match(/^##\s+(.+)/); if(h2){ els.push(<h4 key={k++} style={{fontFamily:"var(--font-display)",fontStyle:"italic",fontSize:size+3,fontWeight:300,color:"var(--text)",letterSpacing:"-0.01em",margin:"12px 0 4px",lineHeight:1.2}}>{inline(h2[1])}</h4>); i++; continue; }
+    const h3=l.match(/^###\s+(.+)/); if(h3){ els.push(<div key={k++} style={{display:"flex",alignItems:"center",gap:8,margin:"12px 0 4px"}}><div style={{width:2,height:13,background:"var(--gold)",borderRadius:1,flexShrink:0}}/><p style={{fontFamily:"var(--font-mono)",fontSize:size-1,fontWeight:600,color:"var(--text)",textTransform:"uppercase",letterSpacing:"0.08em"}}>{inline(h3[1])}</p></div>); i++; continue; }
+    if (/^[\-\*]\s/.test(l)) {
+      const items: string[] = [];
+      while (i < lines.length && /^[\-\*]\s/.test(lines[i])) { items.push(lines[i].replace(/^[\-\*]\s/,"")); i++; }
+      els.push(<ul key={k++} style={{margin:"4px 0 8px",paddingLeft:0,listStyle:"none"}}>{items.map((it,idx)=><li key={idx} style={{display:"flex",gap:10,alignItems:"flex-start",marginBottom:5}}><span style={{color:"var(--gold)",fontSize:9,marginTop:5,flexShrink:0}}>◆</span><span style={{fontSize:size,color,lineHeight:1.75}}>{inline(it)}</span></li>)}</ul>); continue;
+    }
+    if (/^\d+\.\s/.test(l)) {
+      const items: string[] = [];
+      while (i < lines.length && /^\d+\.\s/.test(lines[i])) { items.push(lines[i].replace(/^\d+\.\s/,"")); i++; }
+      els.push(<ol key={k++} style={{margin:"4px 0 8px",paddingLeft:0,listStyle:"none"}}>{items.map((it,idx)=><li key={idx} style={{display:"flex",gap:10,alignItems:"flex-start",marginBottom:5}}><span style={{color:"var(--gold)",fontSize:10,fontFamily:"var(--font-mono)",width:18,marginTop:3,flexShrink:0,textAlign:"right"}}>{idx+1}.</span><span style={{fontSize:size,color,lineHeight:1.75}}>{inline(it)}</span></li>)}</ol>); continue;
+    }
+    if (l.startsWith("> ")) { els.push(<div key={k++} style={{borderLeft:"2px solid var(--gold)",paddingLeft:12,margin:"6px 0",opacity:0.85}}><p style={{fontSize:size,color,lineHeight:1.7,fontStyle:"italic"}}>{inline(l.slice(2))}</p></div>); i++; continue; }
+    els.push(<p key={k++} style={{fontSize:size,color,lineHeight:1.85,margin:"2px 0"}}>{inline(l)}</p>); i++;
+  }
+  return <div>{els}</div>;
+}
+
+
+
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -294,23 +353,38 @@ function OTooltip({ active, payload, label }: { active?:boolean; payload?:TE[]; 
 
 // ─── MODAL ────────────────────────────────────────────────────────────────────
 
-function Modal({ title, onClose, children, width=560 }: { title:string; onClose:()=>void; children:React.ReactNode; width?:number }) {
+function Modal({ title, onClose, children, width=560, wide=false }: { title:string; onClose:()=>void; children:React.ReactNode; width?:number; wide?:boolean }) {
   useEffect(()=>{
     const h=(e:KeyboardEvent)=>{if(e.key==="Escape")onClose();};
     document.addEventListener("keydown",h); return ()=>document.removeEventListener("keydown",h);
   },[onClose]);
   return (
-    <div className="op-modal-wrap" style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,backdropFilter:"blur(4px)",padding:16 }} onClick={onClose}>
-      <div className="op-modal-box fade-in" style={{ background:"var(--surface)",border:"1px solid var(--border)",borderRadius:10,padding:"24px 26px",width:"100%",maxWidth:width,boxShadow:"0 32px 80px rgba(0,0,0,0.25)",maxHeight:"92vh",overflowY:"auto" }} onClick={e=>e.stopPropagation()}>
-        {/* Greek header treatment */}
-        <div style={{ marginBottom:20 }}>
-          <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12 }}>
-            <p style={{ fontSize:13,fontWeight:500,color:"var(--text)",fontFamily:"var(--font-display)",fontStyle:"italic",letterSpacing:"0.02em" }}>{title}</p>
-            <button onClick={onClose} style={{ width:26,height:26,borderRadius:"50%",border:"1px solid var(--border)",background:"transparent",cursor:"pointer",color:"var(--text-muted)",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1 }}>×</button>
-          </div>
-          <GreekDivider />
-        </div>
-        {children}
+    <div className="op-modal-wrap" style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.55)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,backdropFilter:"blur(4px)",padding:wide?"12px":"16px" }} onClick={onClose}>
+      <div className="op-modal-box fade-in" style={{ background:"var(--surface)",border:"1px solid var(--border)",borderRadius:12,padding:wide?"0":"24px 26px",width:"100%",maxWidth:wide?"min(92vw,1100px)":width,boxShadow:"0 32px 80px rgba(0,0,0,0.3)",maxHeight:wide?"88vh":"92vh",overflowY:wide?"hidden":"auto",display:wide?"flex":undefined,flexDirection:wide?"column":undefined }} onClick={e=>e.stopPropagation()}>
+        {wide?(
+          // Wide mode: sticky header + scrollable body
+          <>
+            <div style={{ padding:"18px 24px 14px",borderBottom:"1px solid var(--border)",flexShrink:0 }}>
+              <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10 }}>
+                <p style={{ fontSize:13,fontWeight:500,color:"var(--text)",fontFamily:"var(--font-display)",fontStyle:"italic",letterSpacing:"0.02em" }}>{title}</p>
+                <button onClick={onClose} style={{ width:26,height:26,borderRadius:"50%",border:"1px solid var(--border)",background:"transparent",cursor:"pointer",color:"var(--text-muted)",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1 }}>×</button>
+              </div>
+              <GreekDivider />
+            </div>
+            <div style={{ flex:1,overflowY:"auto",minHeight:0 }}>{children}</div>
+          </>
+        ):(
+          <>
+            <div style={{ marginBottom:20 }}>
+              <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12 }}>
+                <p style={{ fontSize:13,fontWeight:500,color:"var(--text)",fontFamily:"var(--font-display)",fontStyle:"italic",letterSpacing:"0.02em" }}>{title}</p>
+                <button onClick={onClose} style={{ width:26,height:26,borderRadius:"50%",border:"1px solid var(--border)",background:"transparent",cursor:"pointer",color:"var(--text-muted)",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1 }}>×</button>
+              </div>
+              <GreekDivider />
+            </div>
+            {children}
+          </>
+        )}
       </div>
     </div>
   );
@@ -715,16 +789,23 @@ function SplitsChart({ splits, sport }: { splits: Array<{distance:number;moving_
   );
 }
 
-function ActivityDetailModal({ act, onClose, onEdit, onDelete }: { act:Activity; onClose:()=>void; onEdit:(a:Activity)=>void; onDelete:(id:string)=>void }) {
+function ActivityDetailModal({ act, profile, onClose, onEdit, onDelete }: { act:Activity; profile:Profile|null; onClose:()=>void; onEdit:(a:Activity)=>void; onDelete:(id:string)=>void }) {
+  const mob = useIsMobile();
   const sc = sportColor(act.sport);
   const isStrava = act.source === "strava";
   const isCycling = act.sport === "cycling";
   const isRunning = act.sport === "running";
-  
-  // Derived metrics
+  const [rightTab, setRightTab] = useState<"metrics"|"intelligence"|"zones">("metrics");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<string|null>(null);
+
+  // ── Derived metrics ────────────────────────────────────────────────────────
+  const ftp = profile?.ftp_watts ?? null;
+  const lthr = profile?.lthr ?? null;
+  const weight = profile?.weight_kg ?? null;
+
   const efficiency = act.avg_heart_rate && act.avg_power_watts
     ? Math.round((act.avg_power_watts / act.avg_heart_rate) * 100) / 100 : null;
-  const wPerKg = act.avg_power_watts && act.normalized_power ? null : null; // needs profile weight
   const coasting = act.duration_seconds && act.elapsed_seconds && act.elapsed_seconds > act.duration_seconds
     ? Math.round(((act.elapsed_seconds - act.duration_seconds) / act.elapsed_seconds) * 100) : null;
   const paceStr = act.avg_pace_sec_km ? fmtPace(act.avg_pace_sec_km) : null;
@@ -732,146 +813,545 @@ function ActivityDetailModal({ act, onClose, onEdit, onDelete }: { act:Activity;
   const avgSpeedKmh = act.distance_meters && act.duration_seconds
     ? Math.round((act.distance_meters / act.duration_seconds) * 3.6 * 10) / 10 : null;
 
-  return (
-    <Modal title="Session detail" onClose={onClose} width={640}>
-      {/* ── Header ── */}
-      <div style={{ display:"flex",alignItems:"center",gap:14,marginBottom:18 }}>
-        <div style={{ width:46,height:46,borderRadius:10,background:sc+"12",border:"1px solid "+sc+"22",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
-          <SportIcon sport={act.sport} color={sc} size={20} />
-        </div>
-        <div style={{ flex:1,minWidth:0 }}>
-          <p style={{ fontSize:17,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)",marginBottom:6,lineHeight:1.2 }}>{act.title}</p>
-          <div style={{ display:"flex",gap:6,flexWrap:"wrap",alignItems:"center" }}>
-            <Badge color={sc}>{act.sport}</Badge>
-            {act.type&&<Badge color="var(--stone)">{act.type}</Badge>}
-            {isStrava&&<Badge color="var(--terra)">Strava</Badge>}
-            {act.pr_count&&act.pr_count>0&&<Badge color="var(--gold)">🏆 {act.pr_count} PR{act.pr_count>1?"s":""}</Badge>}
-            {act.achievement_count&&act.achievement_count>0&&<Badge color="var(--olive)">★ {act.achievement_count}</Badge>}
-            <span style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{act.date}</span>
-          </div>
-        </div>
-        {act.kudos_count&&act.kudos_count>0?(
-          <div style={{ textAlign:"center",flexShrink:0 }}>
-            <p style={{ fontSize:18,fontWeight:300,color:"var(--terra)",fontFamily:"var(--font-display)" }}>{act.kudos_count}</p>
-            <p style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.1em" }}>kudos</p>
-          </div>
-        ):null}
+  // Intensity Factor = NP / FTP
+  const IF = act.normalized_power && ftp ? Math.round((act.normalized_power / ftp) * 100) / 100 : null;
+  // TSS from power (if not from Strava): IF² × duration_h × 100
+  const tssCalc = IF && act.duration_seconds ? Math.round(IF * IF * (act.duration_seconds / 3600) * 100) : null;
+
+  // W/kg
+  const wkg = act.avg_power_watts && weight ? Math.round((act.avg_power_watts / weight) * 100) / 100 : null;
+  const npKg = act.normalized_power && weight ? Math.round((act.normalized_power / weight) * 100) / 100 : null;
+
+  // Aerobic Decoupling: compare first half HR vs pace to second half
+  const decoupling = useMemo(() => {
+    if (!act.splits_metric || act.splits_metric.length < 4) return null;
+    const splits = act.splits_metric;
+    const half = Math.floor(splits.length / 2);
+    const first = splits.slice(0, half);
+    const second = splits.slice(half);
+    const avgEff = (arr: typeof splits) => {
+      const withHr = arr.filter(s => s.average_heartrate && s.average_speed > 0);
+      if (!withHr.length) return null;
+      return withHr.reduce((sum, s) => sum + s.average_speed / s.average_heartrate!, 0) / withHr.length;
+    };
+    const e1 = avgEff(first), e2 = avgEff(second);
+    if (!e1 || !e2) return null;
+    return Math.round(((e1 - e2) / e1) * 1000) / 10; // % drop
+  }, [act.splits_metric]);
+
+  // Efficiency Factor = avg_speed / avg_hr (aerobic efficiency)
+  const ef = act.avg_heart_rate && act.distance_meters && act.duration_seconds
+    ? Math.round(((act.distance_meters / act.duration_seconds) / act.avg_heart_rate) * 10000) / 100
+    : null;
+
+  // HR zones distribution from splits
+  const hrZones = useMemo(() => {
+    if (!lthr || !act.splits_metric) return null;
+    const zones = [
+      { name:"Z1 Recovery",  lo:0,    hi:0.85, color:"#6B8F71" },
+      { name:"Z2 Aerobic",   lo:0.85, hi:0.89, color:"#4A7C8E" },
+      { name:"Z3 Tempo",     lo:0.89, hi:0.94, color:"#C8A84E" },
+      { name:"Z4 Threshold", lo:0.94, hi:1.00, color:"#C87840" },
+      { name:"Z5 VO2max",    lo:1.00, hi:1.06, color:"#C84040" },
+    ];
+    const splits = act.splits_metric.filter(s => s.average_heartrate);
+    if (!splits.length) return null;
+    const counts = zones.map(z => ({
+      ...z,
+      pct: Math.round(splits.filter(s =>
+        s.average_heartrate! >= lthr * z.lo && s.average_heartrate! < lthr * z.hi
+      ).length / splits.length * 100)
+    }));
+    return counts;
+  }, [act.splits_metric, lthr]);
+
+  // Best splits (fastest km)
+  const bestSplit = useMemo(() => {
+    if (!act.splits_metric?.length) return null;
+    return act.splits_metric.reduce((best, s) =>
+      s.average_speed > best.average_speed ? s : best, act.splits_metric[0]);
+  }, [act.splits_metric]);
+
+  const worstSplit = useMemo(() => {
+    if (!act.splits_metric?.length) return null;
+    const moving = act.splits_metric.filter(s => s.average_speed > 0);
+    return moving.reduce((worst, s) =>
+      s.average_speed < worst.average_speed ? s : worst, moving[0]);
+  }, [act.splits_metric]);
+
+  // Pace fade: % difference between first and last km
+  const paceFade = useMemo(() => {
+    if (!act.splits_metric || act.splits_metric.length < 3) return null;
+    const first = act.splits_metric[0].average_speed;
+    const last = act.splits_metric[act.splits_metric.length - 1].average_speed;
+    if (!first) return null;
+    return Math.round(((last - first) / first) * 100);
+  }, [act.splits_metric]);
+
+  // AI analysis fetch
+  const fetchAI = async () => {
+    setAiLoading(true);
+    try {
+      const d = await fetch("/api/ai/analysis", {
+        method: "GET",
+      }).then(r => r.json());
+      setAiAnalysis(d.analysis ?? d.error ?? "No response.");
+    } catch { setAiAnalysis("Could not connect to AI."); }
+    finally { setAiLoading(false); }
+  };
+
+  // ── Shared blocks ─────────────────────────────────────────────────────────
+  const Header = () => (
+    <div style={{ display:"flex",alignItems:"center",gap:14,marginBottom:16 }}>
+      <div style={{ width:44,height:44,borderRadius:10,background:sc+"12",border:"1px solid "+sc+"22",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+        <SportIcon sport={act.sport} color={sc} size={20} />
       </div>
-
-      <GreekDivider style={{ marginBottom:18 }} />
-
-      {/* ── Primary metrics — big numbers ── */}
-      <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:1,background:"var(--border)",borderRadius:8,overflow:"hidden",marginBottom:16 }}>
-        {[
-          { label:"Duration",  value:fmtDuration(act.duration_seconds), color:"var(--text)" },
-          { label:"Distance",  value:fmtDist(act.distance_meters,act.sport), color:"var(--text)" },
-          { label:"Load · TSS",value:act.tss??null, color:tssColor(act.tss??0) },
-          { label:"Elevation", value:act.elevation_gain?`↑${act.elevation_gain}m`:null, color:"var(--text)" },
-        ].map((m,i)=>(
-          <div key={i} style={{ background:"var(--surface)",padding:"14px 16px" }}>
-            <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"var(--font-mono)",marginBottom:8 }}>{m.label}</p>
-            <p style={{ fontSize:20,fontWeight:300,fontFamily:"var(--font-display)",color:m.color,lineHeight:1,letterSpacing:"-0.02em" }}>{m.value??"—"}</p>
-          </div>
-        ))}
+      <div style={{ flex:1,minWidth:0 }}>
+        <p style={{ fontSize:16,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)",marginBottom:5,lineHeight:1.2 }}>{act.title}</p>
+        <div style={{ display:"flex",gap:5,flexWrap:"wrap",alignItems:"center" }}>
+          <Badge color={sc}>{act.sport}</Badge>
+          {act.type&&<Badge color="var(--stone)">{act.type}</Badge>}
+          {isStrava&&<Badge color="var(--terra)">Strava</Badge>}
+          {act.pr_count&&act.pr_count>0&&<Badge color="var(--gold)">🏆 {act.pr_count} PR{act.pr_count>1?"s":""}</Badge>}
+          {act.achievement_count&&act.achievement_count>0&&<Badge color="var(--olive)">★ {act.achievement_count}</Badge>}
+          <span style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{act.date}</span>
+        </div>
       </div>
+      {act.kudos_count&&act.kudos_count>0?(
+        <div style={{ textAlign:"center",flexShrink:0 }}>
+          <p style={{ fontSize:18,fontWeight:300,color:"var(--terra)",fontFamily:"var(--font-display)" }}>{act.kudos_count}</p>
+          <p style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.1em" }}>kudos</p>
+        </div>
+      ):null}
+    </div>
+  );
 
-      {/* ── Pace / Speed ── */}
+  const PrimaryGrid = () => (
+    <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:1,background:"var(--border)",borderRadius:8,overflow:"hidden",marginBottom:14 }}>
+      {[
+        { label:"Duration", value:fmtDuration(act.duration_seconds), color:"var(--text)" },
+        { label:"Distance", value:fmtDist(act.distance_meters,act.sport), color:"var(--text)" },
+        { label:"TSS",      value:act.tss??null, color:tssColor(act.tss??0) },
+        { label:"Elevation",value:act.elevation_gain?`↑${act.elevation_gain}m`:null, color:"var(--text)" },
+      ].map((m,i)=>(
+        <div key={i} style={{ background:"var(--surface-hi)",padding:"12px 14px" }}>
+          <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"var(--font-mono)",marginBottom:6 }}>{m.label}</p>
+          <p style={{ fontSize:18,fontWeight:300,fontFamily:"var(--font-display)",color:m.color,lineHeight:1,letterSpacing:"-0.02em" }}>{m.value??"—"}</p>
+        </div>
+      ))}
+    </div>
+  );
+
+  const StatsBlock = () => (
+    <div style={{ display:"flex",flexDirection:"column",gap:0 }}>
+      {/* Pace / Speed */}
       {(isRunning||isCycling)&&(
-        <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:16,padding:"14px 0",borderBottom:"1px solid var(--border)" }}>
+        <div style={{ display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:12,padding:"12px 0",borderBottom:"1px solid var(--border)" }}>
           <StatCell label={isRunning?"Avg pace":"Avg speed"} value={isRunning?paceStr:avgSpeedKmh} unit={isRunning?"/km":"km/h"} color="var(--olive)" />
-          <StatCell label={isRunning?"Best pace":"Max speed"} value={isRunning?null:maxSpeedKmh} unit={isRunning?"/km":"km/h"} />
           <StatCell label="Cadence" value={act.average_cadence} unit={isRunning?"spm":"rpm"} hint={isRunning?"Steps per minute. Optimal: 170–180 spm":"Pedal revolutions per minute. Optimal: 85–100 rpm"} />
-          {isRunning&&act.elapsed_seconds&&act.duration_seconds&&act.elapsed_seconds>act.duration_seconds?(
-            <StatCell label="Moving time" value={fmtDuration(act.duration_seconds)} />
-          ):(
-            <StatCell label="Elapsed" value={fmtDuration(act.elapsed_seconds)} />
-          )}
+          <StatCell label={isRunning?"Max speed":"Max speed"} value={maxSpeedKmh} unit="km/h" />
+          <StatCell label="Elapsed" value={fmtDuration(act.elapsed_seconds)} />
         </div>
       )}
-
-      {/* ── Heart Rate ── */}
-      <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:16,padding:"14px 0",borderBottom:"1px solid var(--border)" }}>
+      {/* HR */}
+      <div style={{ display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:12,padding:"12px 0",borderBottom:"1px solid var(--border)" }}>
         <StatCell label="Avg HR"  value={act.avg_heart_rate}  unit="bpm" color={act.avg_heart_rate&&act.avg_heart_rate>160?"var(--terra)":"var(--text)"} />
         <StatCell label="Max HR"  value={act.max_heart_rate}  unit="bpm" color="var(--terra)" />
-        <StatCell label="Suffer"  value={act.suffer_score}    hint="Strava Suffer Score — relative effort based on HR zones" color="var(--gold)" />
+        <StatCell label="Suffer score" value={act.suffer_score} hint="Strava Suffer Score — relative effort based on HR zones" color="var(--gold)" />
         <StatCell label="Feel"    value={act.feel_score?`${act.feel_score}/10`:null} color={act.feel_score&&act.feel_score>=7?"var(--olive)":act.feel_score&&act.feel_score>=5?"var(--gold)":"var(--terra)"} />
       </div>
-
-      {/* ── Power (cycling) ── */}
+      {/* Power */}
       {(act.avg_power_watts||act.normalized_power)&&(
-        <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:16,padding:"14px 0",borderBottom:"1px solid var(--border)" }}>
+        <div style={{ display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:12,padding:"12px 0",borderBottom:"1px solid var(--border)" }}>
           <StatCell label="Avg power" value={act.avg_power_watts} unit="W" color="var(--gold)" />
-          <StatCell label="NP" value={act.normalized_power} unit="W" color="var(--gold)" hint="Normalized Power — variability-adjusted average. Better represents true physiological cost." />
+          <StatCell label="NP" value={act.normalized_power} unit="W" color="var(--gold)" hint="Normalized Power — variability-adjusted average." />
           <StatCell label="Max power" value={act.max_power_watts} unit="W" />
-          <StatCell label="Var. index" value={act.variability_index} hint="NP ÷ Avg Power. Closer to 1.00 = more steady effort. >1.10 = high variability." />
+          <StatCell label="Var. index" value={act.variability_index} hint="NP ÷ Avg Power. Closer to 1.00 = more steady effort." />
         </div>
       )}
-
-      {/* ── Energy ── */}
+      {/* Energy */}
       {(act.calories||act.kilojoules)&&(
-        <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:16,padding:"14px 0",borderBottom:"1px solid var(--border)" }}>
+        <div style={{ display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:12,padding:"12px 0",borderBottom:"1px solid var(--border)" }}>
           <StatCell label="Calories" value={act.calories} unit="kcal" />
-          <StatCell label="Kilojoules" value={act.kilojoules} unit="kJ" hint="Mechanical energy output (cycling). ~4 kJ ≈ 1 kcal at ~25% efficiency." />
-          {efficiency&&<StatCell label="W/HR ratio" value={efficiency} hint="Power-to-HR efficiency. Higher = more aerobically efficient." />}
-          {coasting!==null&&<StatCell label="Coasting" value={`${coasting}%`} hint="Time stopped or coasting vs. total elapsed time." />}
+          <StatCell label="Kilojoules" value={act.kilojoules} unit="kJ" hint="Mechanical energy output (cycling)." />
+          {efficiency&&<StatCell label="W/HR ratio" value={efficiency} hint="Power-to-HR efficiency." />}
+          {coasting!==null&&<StatCell label="Coasting" value={`${coasting}%`} hint="Time stopped vs. elapsed." />}
         </div>
       )}
-
-      {/* ── Gear & Device ── */}
+      {/* Gear */}
       {(act.gear_name||act.device_name)&&(
-        <div style={{ display:"flex",gap:24,marginBottom:16,padding:"12px 0",borderBottom:"1px solid var(--border)" }}>
-          {act.gear_name&&(
-            <div>
-              <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"var(--font-mono)",marginBottom:4 }}>Equipment</p>
-              <p style={{ fontSize:12,color:"var(--text)",fontFamily:"var(--font-mono)" }}>{act.gear_name}</p>
-            </div>
-          )}
-          {act.device_name&&(
-            <div>
-              <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"var(--font-mono)",marginBottom:4 }}>Device</p>
-              <p style={{ fontSize:12,color:"var(--text)",fontFamily:"var(--font-mono)" }}>{act.device_name}</p>
-            </div>
-          )}
-          {isStrava&&act.strava_id&&(
-            <div style={{ marginLeft:"auto" }}>
-              <a href={`https://www.strava.com/activities/${act.strava_id}`} target="_blank" rel="noopener noreferrer"
-                style={{ fontSize:10,color:"var(--terra)",fontFamily:"var(--font-mono)",textDecoration:"none",border:"1px solid var(--terra)30",borderRadius:4,padding:"4px 10px" }}>
-                View on Strava →
-              </a>
-            </div>
-          )}
+        <div style={{ display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:12,padding:"12px 0",borderBottom:"1px solid var(--border)" }}>
+          {act.gear_name&&<StatCell label="Equipment" value={act.gear_name} />}
+          {act.device_name&&<StatCell label="Device" value={act.device_name} />}
         </div>
       )}
+    </div>
+  );
 
-      {/* ── Splits ── */}
+  const Actions = () => (
+    <div style={{ display:"flex",gap:8,paddingTop:12,flexWrap:"wrap" }}>
+      <Btn onClick={()=>{onClose();onEdit(act);}}>Edit</Btn>
+      <Btn variant="danger" onClick={()=>{onClose();onDelete(act.id);}}>Delete</Btn>
+      {isStrava&&act.strava_id&&(
+        <a href={`https://www.strava.com/activities/${act.strava_id}`} target="_blank" rel="noopener noreferrer"
+          style={{ fontSize:11,color:"var(--terra)",fontFamily:"var(--font-mono)",textDecoration:"none",border:"1px solid var(--terra)30",borderRadius:6,padding:"9px 16px",display:"flex",alignItems:"center" }}>
+          Strava →
+        </a>
+      )}
+      <Btn variant="ghost" onClick={onClose} style={{ marginLeft:"auto" }}>Close</Btn>
+    </div>
+  );
+
+  // ── MOBILE: single column, scrollable ─────────────────────────────────────
+  if (mob) return (
+    <Modal title="Session detail" onClose={onClose}>
+      <Header />
+      <GreekDivider style={{ marginBottom:14 }} />
+      <PrimaryGrid />
+      {/* All stats in 4-col on mobile */}
+      {(isRunning||isCycling)&&(
+        <div style={{ display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:12,padding:"12px 0",borderBottom:"1px solid var(--border)" }}>
+          <StatCell label={isRunning?"Avg pace":"Avg speed"} value={isRunning?paceStr:avgSpeedKmh} unit={isRunning?"/km":"km/h"} color="var(--olive)" />
+          <StatCell label="Cadence" value={act.average_cadence} unit={isRunning?"spm":"rpm"} />
+        </div>
+      )}
+      <div style={{ display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:12,padding:"12px 0",borderBottom:"1px solid var(--border)" }}>
+        <StatCell label="Avg HR" value={act.avg_heart_rate} unit="bpm" />
+        <StatCell label="Max HR" value={act.max_heart_rate} unit="bpm" color="var(--terra)" />
+        <StatCell label="Suffer" value={act.suffer_score} color="var(--gold)" />
+        <StatCell label="Feel"   value={act.feel_score?`${act.feel_score}/10`:null} />
+      </div>
+      {(act.avg_power_watts||act.normalized_power)&&(
+        <div style={{ display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:12,padding:"12px 0",borderBottom:"1px solid var(--border)" }}>
+          <StatCell label="Avg power" value={act.avg_power_watts} unit="W" color="var(--gold)" />
+          <StatCell label="NP" value={act.normalized_power} unit="W" color="var(--gold)" />
+        </div>
+      )}
+      {(act.calories)&&(
+        <div style={{ padding:"12px 0",borderBottom:"1px solid var(--border)" }}>
+          <StatCell label="Calories" value={act.calories} unit="kcal" />
+        </div>
+      )}
       {act.splits_metric&&act.splits_metric.length>1&&(
-        <div style={{ marginBottom:16 }}>
-          <SplitsChart splits={act.splits_metric} sport={act.sport} />
-        </div>
+        <div style={{ marginTop:12 }}><SplitsChart splits={act.splits_metric} sport={act.sport} /></div>
       )}
-
-      {/* ── Notes ── */}
       {act.notes&&(
-        <div style={{ background:"var(--bg)",borderRadius:6,padding:"12px 14px",marginBottom:16,borderLeft:"2px solid var(--border-hi)" }}>
+        <div style={{ background:"var(--bg)",borderRadius:6,padding:"12px 14px",marginTop:12,borderLeft:"2px solid var(--border-hi)" }}>
           <p style={{ fontSize:12,color:"var(--text-2)",lineHeight:1.7,fontFamily:"var(--font-display)",fontStyle:"italic" }}>&ldquo;{act.notes}&rdquo;</p>
         </div>
       )}
+      <Actions />
+    </Modal>
+  );
 
-      {/* ── Actions ── */}
-      <div style={{ display:"flex",gap:8,paddingTop:4 }}>
-        <Btn onClick={()=>{onClose();onEdit(act);}}>Edit</Btn>
-        <Btn variant="danger" onClick={()=>{onClose();onDelete(act.id);}}>Delete</Btn>
-        {isStrava&&act.strava_id&&!act.gear_name&&!act.device_name&&(
-          <a href={`https://www.strava.com/activities/${act.strava_id}`} target="_blank" rel="noopener noreferrer"
-            style={{ fontSize:11,color:"var(--terra)",fontFamily:"var(--font-mono)",textDecoration:"none",border:"1px solid var(--terra)30",borderRadius:6,padding:"9px 16px",display:"flex",alignItems:"center" }}>
-            Strava →
-          </a>
-        )}
-        <Btn variant="ghost" onClick={onClose} style={{ marginLeft:"auto" }}>Close</Btn>
+  // ── DESKTOP: 16:9 two-column layout ──────────────────────────────────────
+  return (
+    <Modal title="Session detail" onClose={onClose} wide>
+      <div style={{ display:"grid",gridTemplateColumns:"1fr 380px",height:"100%",minHeight:0 }}>
+
+        {/* ═══ LEFT PANEL ═══════════════════════════════════════════════════ */}
+        <div style={{ padding:"20px 24px",overflowY:"auto",borderRight:"1px solid var(--border)",display:"flex",flexDirection:"column",gap:14 }}>
+          <Header />
+          <GreekDivider />
+          <PrimaryGrid />
+
+          {/* Splits chart — main visual */}
+          {act.splits_metric&&act.splits_metric.length>1?(
+            <div>
+              <SplitsChart splits={act.splits_metric} sport={act.sport} />
+
+              {/* Split summary: best / worst / fade */}
+              <div style={{ display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:1,background:"var(--border)",borderRadius:6,overflow:"hidden",marginTop:10 }}>
+                {[
+                  { label:"Best km", value: bestSplit ? (isRunning ? fmtPace(Math.round(1000/bestSplit.average_speed)) : `${Math.round(bestSplit.average_speed*3.6*10)/10} km/h`) : null, sub:`km ${bestSplit?.split??"-"}`, color:"var(--olive)" },
+                  { label:"Worst km", value: worstSplit ? (isRunning ? fmtPace(Math.round(1000/worstSplit.average_speed)) : `${Math.round(worstSplit.average_speed*3.6*10)/10} km/h`) : null, sub:`km ${worstSplit?.split??"-"}`, color:"var(--terra)" },
+                  { label:"Pace fade", value: paceFade !== null ? `${paceFade > 0 ? "+" : ""}${paceFade}%` : null, sub: paceFade !== null ? (paceFade >= 0 ? "↓ slower finish" : "↑ negative split") : "", color: paceFade !== null ? (paceFade < -2 ? "var(--olive)" : paceFade > 5 ? "var(--terra)" : "var(--gold)") : "var(--text)" },
+                ].map((m,i) => (
+                  <div key={i} style={{ background:"var(--surface)",padding:"10px 12px" }}>
+                    <p style={{ fontSize:8,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"var(--font-mono)",marginBottom:4 }}>{m.label}</p>
+                    <p style={{ fontSize:15,fontWeight:300,fontFamily:"var(--font-display)",color:m.color,lineHeight:1,letterSpacing:"-0.01em",marginBottom:2 }}>{m.value??"—"}</p>
+                    <p style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)" }}>{m.sub}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ):(isRunning||isCycling)&&(
+            <div style={{ display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center",gap:6,padding:"24px 0",opacity:0.45 }}>
+              <p style={{ fontSize:52,fontWeight:300,fontFamily:"var(--font-display)",color:"var(--olive)",letterSpacing:"-0.03em",lineHeight:1 }}>{isRunning?paceStr:(avgSpeedKmh?`${avgSpeedKmh}`:null)??"—"}</p>
+              <p style={{ fontSize:9,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.1em" }}>{isRunning?"avg pace / km":"avg speed km/h"}</p>
+            </div>
+          )}
+
+          {/* Aerobic decoupling bar */}
+          {decoupling !== null && (
+            <div style={{ background:"var(--surface)",borderRadius:6,padding:"12px 14px",border:"1px solid var(--border)" }}>
+              <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8 }}>
+                <div style={{ display:"flex",alignItems:"center",gap:6 }}>
+                  <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"var(--font-mono)" }}>Aerobic decoupling</p>
+                  <HintIcon text="How much aerobic efficiency drops from first half to second half. < 5% = excellent aerobic base. > 10% = significant cardiac drift." />
+                </div>
+                <span style={{ fontSize:14,fontWeight:300,fontFamily:"var(--font-display)",color:decoupling<5?"var(--olive)":decoupling<10?"var(--gold)":"var(--terra)" }}>{decoupling.toFixed(1)}%</span>
+              </div>
+              <div style={{ height:5,background:"var(--border)",borderRadius:4,overflow:"hidden" }}>
+                <div style={{ height:"100%",width:`${Math.min(decoupling*5,100)}%`,background:decoupling<5?"var(--olive)":decoupling<10?"var(--gold)":"var(--terra)",borderRadius:4,transition:"width 0.6s ease" }} />
+              </div>
+              <div style={{ display:"flex",justifyContent:"space-between",marginTop:4 }}>
+                <span style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)" }}>excellent &lt;5%</span>
+                <span style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)" }}>drift &gt;10%</span>
+              </div>
+            </div>
+          )}
+
+          {act.notes&&(
+            <div style={{ background:"var(--bg)",borderRadius:6,padding:"12px 14px",borderLeft:"2px solid var(--border-hi)" }}>
+              <p style={{ fontSize:11,color:"var(--text-2)",lineHeight:1.7,fontFamily:"var(--font-display)",fontStyle:"italic" }}>&ldquo;{act.notes}&rdquo;</p>
+            </div>
+          )}
+          <Actions />
+        </div>
+
+        {/* ═══ RIGHT PANEL — tabbed ════════════════════════════════════════ */}
+        <div style={{ display:"flex",flexDirection:"column",background:"var(--bg)",minHeight:0 }}>
+          {/* Tab bar */}
+          <div style={{ display:"flex",borderBottom:"1px solid var(--border)",flexShrink:0 }}>
+            {([
+              { id:"metrics",      label:"Metrics" },
+              { id:"intelligence", label:"Intelligence" },
+              { id:"zones",        label:"Zones" },
+            ] as const).map(t => (
+              <button key={t.id} onClick={()=>setRightTab(t.id)} style={{
+                flex:1, padding:"11px 4px", border:"none",
+                borderBottom:`2px solid ${rightTab===t.id?"var(--gold)":"transparent"}`,
+                background:"transparent",
+                color:rightTab===t.id?"var(--gold)":"var(--text-subtle)",
+                fontSize:10, fontFamily:"var(--font-mono)",
+                textTransform:"uppercase", letterSpacing:"0.08em",
+                cursor:"pointer", transition:"all 0.15s",
+              }}>{t.label}</button>
+            ))}
+          </div>
+
+          {/* Tab content */}
+          <div style={{ flex:1,overflowY:"auto",padding:"16px 20px" }}>
+
+            {/* ── TAB: METRICS ─────────────────────────────────────────── */}
+            {rightTab==="metrics"&&(
+              <div style={{ display:"flex",flexDirection:"column",gap:0 }}>
+                {/* Pace / Speed */}
+                {(isRunning||isCycling)&&(
+                  <div style={{ display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:12,padding:"10px 0",borderBottom:"1px solid var(--border)" }}>
+                    <StatCell label={isRunning?"Avg pace":"Avg speed"} value={isRunning?paceStr:avgSpeedKmh} unit={isRunning?"/km":"km/h"} color="var(--olive)" />
+                    <StatCell label="Max speed" value={maxSpeedKmh} unit="km/h" />
+                    <StatCell label="Cadence" value={act.average_cadence} unit={isRunning?"spm":"rpm"} hint={isRunning?"Steps per minute. Optimal: 170–180 spm":"Pedal revolutions per minute. Optimal: 85–100 rpm"} />
+                    <StatCell label="Elapsed" value={fmtDuration(act.elapsed_seconds)} />
+                  </div>
+                )}
+                {/* HR */}
+                <div style={{ display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:12,padding:"10px 0",borderBottom:"1px solid var(--border)" }}>
+                  <StatCell label="Avg HR"  value={act.avg_heart_rate}  unit="bpm" color={act.avg_heart_rate&&act.avg_heart_rate>160?"var(--terra)":"var(--text)"} />
+                  <StatCell label="Max HR"  value={act.max_heart_rate}  unit="bpm" color="var(--terra)" />
+                  <StatCell label="Suffer score" value={act.suffer_score} hint="Strava Suffer Score — relative effort based on HR zones" color="var(--gold)" />
+                  <StatCell label="Feel" value={act.feel_score?`${act.feel_score}/10`:null} color={act.feel_score&&act.feel_score>=7?"var(--olive)":act.feel_score&&act.feel_score>=5?"var(--gold)":"var(--terra)"} />
+                </div>
+                {/* Power */}
+                {(act.avg_power_watts||act.normalized_power)&&(
+                  <div style={{ display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:12,padding:"10px 0",borderBottom:"1px solid var(--border)" }}>
+                    <StatCell label="Avg power" value={act.avg_power_watts} unit="W" color="var(--gold)" />
+                    <StatCell label="NP" value={act.normalized_power} unit="W" color="var(--gold)" hint="Normalized Power — variability-adjusted average." />
+                    <StatCell label="Max power" value={act.max_power_watts} unit="W" />
+                    <StatCell label="Var. index" value={act.variability_index} hint="NP ÷ Avg Power. Closer to 1.00 = more steady effort." />
+                  </div>
+                )}
+                {/* Energy */}
+                {(act.calories||act.kilojoules)&&(
+                  <div style={{ display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:12,padding:"10px 0",borderBottom:"1px solid var(--border)" }}>
+                    <StatCell label="Calories" value={act.calories} unit="kcal" />
+                    <StatCell label="Kilojoules" value={act.kilojoules} unit="kJ" hint="Mechanical energy output (cycling). ~4kJ ≈ 1kcal at ~25% efficiency." />
+                    {efficiency&&<StatCell label="W/HR ratio" value={efficiency} hint="Power-to-HR efficiency index." />}
+                    {coasting!==null&&<StatCell label="Coasting" value={`${coasting}%`} hint="Time stopped vs. total elapsed time." />}
+                  </div>
+                )}
+                {/* Gear */}
+                {(act.gear_name||act.device_name)&&(
+                  <div style={{ display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:12,padding:"10px 0",borderBottom:"1px solid var(--border)" }}>
+                    {act.gear_name&&<StatCell label="Equipment" value={act.gear_name} />}
+                    {act.device_name&&<StatCell label="Device" value={act.device_name} />}
+                  </div>
+                )}
+                {/* Strava link */}
+                {isStrava&&act.strava_id&&(
+                  <div style={{ paddingTop:12 }}>
+                    <a href={`https://www.strava.com/activities/${act.strava_id}`} target="_blank" rel="noopener noreferrer"
+                      style={{ fontSize:10,color:"var(--terra)",fontFamily:"var(--font-mono)",textDecoration:"none",border:"1px solid var(--terra)30",borderRadius:5,padding:"7px 12px",display:"inline-flex",alignItems:"center",gap:6 }}>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="var(--terra)"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
+                      View on Strava
+                    </a>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── TAB: INTELLIGENCE ────────────────────────────────────── */}
+            {rightTab==="intelligence"&&(
+              <div style={{ display:"flex",flexDirection:"column",gap:12 }}>
+                {/* Power metrics */}
+                {(IF||wkg||npKg)&&(
+                  <div>
+                    <p style={{ fontSize:8,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"var(--font-mono)",marginBottom:10 }}>Power intelligence</p>
+                    <div style={{ display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:1,background:"var(--border)",borderRadius:6,overflow:"hidden",marginBottom:12 }}>
+                      {[
+                        { label:"IF", value:IF, sub:"Intensity Factor", hint:"NP ÷ FTP. 1.0 = threshold effort. <0.75 = easy. >1.05 = very hard.", color:IF&&IF>1.0?"var(--terra)":IF&&IF>0.85?"var(--gold)":"var(--olive)" },
+                        { label:"W/kg", value:wkg, sub:"Avg watts per kg", hint:"Average power relative to bodyweight. Key cycling performance metric.", color:"var(--gold)" },
+                        { label:"NP/kg", value:npKg, sub:"Norm. power per kg", hint:"Normalized Power per kg. More accurate than avg W/kg for variable efforts.", color:"var(--gold)" },
+                        { label:"TSS est.", value:tssCalc??act.tss, sub:"Training Stress Score", hint:"Quantifies workout load: duration × intensity². 100 = 1h at threshold.", color:tssColor(tssCalc??act.tss??0) },
+                      ].map((m,i)=>(
+                        <div key={i} style={{ background:"var(--surface)",padding:"10px 12px" }}>
+                          <div style={{ display:"flex",alignItems:"center",gap:4,marginBottom:4 }}>
+                            <p style={{ fontSize:8,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"var(--font-mono)" }}>{m.label}</p>
+                            {m.hint&&<HintIcon text={m.hint} />}
+                          </div>
+                          <p style={{ fontSize:17,fontWeight:300,fontFamily:"var(--font-display)",color:m.color,lineHeight:1,letterSpacing:"-0.02em",marginBottom:2 }}>{m.value??"-"}</p>
+                          <p style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)" }}>{m.sub}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Aerobic metrics */}
+                <div>
+                  <p style={{ fontSize:8,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"var(--font-mono)",marginBottom:10 }}>Aerobic efficiency</p>
+                  <div style={{ display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:1,background:"var(--border)",borderRadius:6,overflow:"hidden",marginBottom:12 }}>
+                    {[
+                      { label:"Efficiency factor", value:ef, hint:"Speed ÷ HR × 10000. Tracks aerobic fitness over time. Higher = more fit.", color:"var(--olive)" },
+                      { label:"Aerobic decoupling", value:decoupling!==null?`${decoupling.toFixed(1)}%`:null, hint:"Efficiency drop first→second half. <5% = well-trained. >10% = underpaced/underfueled.", color:decoupling!==null?decoupling<5?"var(--olive)":decoupling<10?"var(--gold)":"var(--terra)":"var(--text)" },
+                      { label:"W/HR efficiency", value:efficiency, hint:"Watts per bpm. Higher = more mechanically efficient at a given HR.", color:"var(--text)" },
+                      { label:"Suffer/TSS ratio", value:act.suffer_score&&act.tss?Math.round((act.suffer_score/act.tss)*100)/100:null, hint:"Strava Suffer vs TSS. >1.2 suggests effort was harder than load indicates.", color:"var(--text)" },
+                    ].map((m,i)=>(
+                      <div key={i} style={{ background:"var(--surface)",padding:"10px 12px" }}>
+                        <div style={{ display:"flex",alignItems:"center",gap:4,marginBottom:4 }}>
+                          <p style={{ fontSize:8,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"var(--font-mono)" }}>{m.label}</p>
+                          {m.hint&&<HintIcon text={m.hint} />}
+                        </div>
+                        <p style={{ fontSize:17,fontWeight:300,fontFamily:"var(--font-display)",color:m.color??"var(--text)",lineHeight:1,letterSpacing:"-0.02em" }}>{m.value??"-"}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* AI per-activity analysis */}
+                <div style={{ background:"var(--surface)",borderRadius:8,padding:"14px",border:"1px solid var(--border)" }}>
+                  <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10 }}>
+                    <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"var(--font-mono)" }}>AI analysis · this session</p>
+                    <button onClick={fetchAI} disabled={aiLoading} style={{ fontSize:9,fontFamily:"var(--font-mono)",color:"var(--gold)",background:"none",border:"1px solid var(--gold)40",borderRadius:4,padding:"4px 10px",cursor:aiLoading?"not-allowed":"pointer",opacity:aiLoading?0.6:1 }}>
+                      {aiLoading?"Analysing…":"Analyse →"}
+                    </button>
+                  </div>
+                  {aiAnalysis?(
+                    <div><Markdown text={aiAnalysis} size={11} /></div>
+                  ):(
+                    <p style={{ fontSize:11,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",fontStyle:"italic" }}>
+                      Get AI-powered insights specific to this session — pacing strategy, recovery needs, training adaptation signals.
+                    </p>
+                  )}
+                </div>
+
+                {!ftp&&!lthr&&(
+                  <div style={{ padding:"10px 12px",background:"var(--gold-dim)",borderRadius:6,border:"1px solid var(--gold)30" }}>
+                    <p style={{ fontSize:10,color:"var(--gold)",fontFamily:"var(--font-mono)" }}>Set FTP, LTHR and weight in Profile to unlock W/kg, IF, and zone analysis.</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── TAB: ZONES ───────────────────────────────────────────── */}
+            {rightTab==="zones"&&(
+              <div style={{ display:"flex",flexDirection:"column",gap:14 }}>
+                {/* HR zone distribution */}
+                {hrZones?(
+                  <div>
+                    <p style={{ fontSize:8,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"var(--font-mono)",marginBottom:12 }}>HR zone distribution · this session</p>
+                    <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
+                      {hrZones.map(z=>(
+                        <div key={z.name}>
+                          <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4 }}>
+                            <span style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{z.name}</span>
+                            <span style={{ fontSize:10,color:z.color,fontFamily:"var(--font-mono)",fontWeight:600 }}>{z.pct}%</span>
+                          </div>
+                          <div style={{ height:6,background:"var(--border)",borderRadius:4,overflow:"hidden" }}>
+                            <div style={{ height:"100%",width:`${z.pct}%`,background:z.color,borderRadius:4,opacity:0.8,transition:"width 0.6s ease" }} />
+                          </div>
+                          <div style={{ display:"flex",justifyContent:"space-between",marginTop:2 }}>
+                            <span style={{ fontSize:7,color:"var(--text-subtle)",fontFamily:"var(--font-mono)" }}>{lthr?`${Math.round(lthr*z.lo)}–${Math.round(lthr*z.hi)} bpm`:""}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Time in zone summary */}
+                    <div style={{ marginTop:14,padding:"10px 12px",background:"var(--surface)",borderRadius:6 }}>
+                      <p style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6 }}>Session character</p>
+                      {(()=>{
+                        const z2 = hrZones.find(z=>z.name.includes("Z2"))?.pct??0;
+                        const z4z5 = (hrZones.find(z=>z.name.includes("Z4"))?.pct??0)+(hrZones.find(z=>z.name.includes("Z5"))?.pct??0);
+                        const char = z2>60?"Aerobic base · long endurance":z4z5>40?"High intensity · threshold/VO2":z2>40&&z4z5<20?"Polarised · good distribution":"Moderate · tempo/sweet spot";
+                        const advice = z2>60?"Excellent for base building. Aerobic development without excess fatigue.":z4z5>40?"High metabolic stress. Ensure adequate recovery before next hard session.":z2>40&&z4z5<20?"Well-distributed effort. Ideal polarised training profile.":"Tempo work. Effective but accumulates fatigue. Monitor week load.";
+                        return (
+                          <>
+                            <p style={{ fontSize:12,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)",marginBottom:4 }}>{char}</p>
+                            <p style={{ fontSize:10,color:"var(--text-muted)",lineHeight:1.6,fontFamily:"var(--font-mono)" }}>{advice}</p>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                ):(
+                  <div style={{ textAlign:"center",padding:"24px 0",opacity:0.5 }}>
+                    <p style={{ fontSize:12,color:"var(--text-muted)",fontFamily:"var(--font-mono)",marginBottom:6 }}>No zone data available</p>
+                    <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)" }}>
+                      {!lthr?"Set your LTHR in Profile to see HR zone distribution.":"This activity has no per-km HR splits from Strava."}
+                    </p>
+                  </div>
+                )}
+
+                {/* Pace zones from VDOT if available */}
+                {isRunning&&profile?.vdot&&act.splits_metric&&act.splits_metric.length>1&&(
+                  <div>
+                    <p style={{ fontSize:8,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"var(--font-mono)",marginBottom:10 }}>Split consistency</p>
+                    {(()=>{
+                      const speeds = act.splits_metric!.map(s=>s.average_speed).filter(Boolean);
+                      const avg = speeds.reduce((a,b)=>a+b,0)/speeds.length;
+                      const stdDev = Math.sqrt(speeds.reduce((sum,s)=>sum+(s-avg)**2,0)/speeds.length);
+                      const cv = Math.round((stdDev/avg)*1000)/10; // coefficient of variation %
+                      return (
+                        <div style={{ background:"var(--surface)",borderRadius:6,padding:"12px 14px" }}>
+                          <div style={{ display:"flex",justifyContent:"space-between",marginBottom:8 }}>
+                            <span style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>Pace variability (CV)</span>
+                            <span style={{ fontSize:12,fontFamily:"var(--font-mono)",color:cv<3?"var(--olive)":cv<6?"var(--gold)":"var(--terra)",fontWeight:600 }}>{cv}%</span>
+                          </div>
+                          <div style={{ height:4,background:"var(--border)",borderRadius:3,overflow:"hidden" }}>
+                            <div style={{ height:"100%",width:`${Math.min(cv*8,100)}%`,background:cv<3?"var(--olive)":cv<6?"var(--gold)":"var(--terra)",borderRadius:3 }} />
+                          </div>
+                          <p style={{ fontSize:9,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",marginTop:6 }}>
+                            {cv<3?"Very consistent pacing":cv<6?"Good pacing control":cv<10?"Moderate variability — check course profile":"High variability — hills, wind or pacing issues"}
+                          </p>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+              </div>
+            )}
+
+          </div>
+        </div>
+
       </div>
     </Modal>
   );
 }
+
+
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
 
@@ -891,8 +1371,8 @@ function DashboardPage({ profile, activities, metrics, onNavigate, onLogWellness
 
   return (
     <div style={{ display:"flex",flexDirection:"column",gap:20 }} className="fade-up">
-      {calSel&&<ActivityDetailModal act={calSel} onClose={()=>setCalSel(null)} onEdit={()=>{}} onDelete={()=>{}} />}
-      {detail&&<ActivityDetailModal act={detail} onClose={()=>setDetail(null)} onEdit={()=>{}} onDelete={()=>{}} />}
+      {calSel&&<ActivityDetailModal act={calSel} profile={profile} onClose={()=>setCalSel(null)} onEdit={()=>{}} onDelete={()=>{}} />}
+      {detail&&<ActivityDetailModal act={detail} profile={profile} onClose={()=>setDetail(null)} onEdit={()=>{}} onDelete={()=>{}} />}
 
       {/* Page title */}
       <div className="op-dash-header" style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-end",borderBottom:"1px solid var(--border)",paddingBottom:18 }}>
@@ -1104,7 +1584,7 @@ function CoachPage({ activities, metrics, onLogWellness }: { activities:Activity
           </Card>
           {rec&&(
             <InsightCard accent="var(--gold)" tag="AI Recommendation">
-              <div style={{ fontSize:14,color:"var(--text-2)",lineHeight:1.85,whiteSpace:"pre-wrap",fontFamily:"var(--font-display)",fontWeight:300 }}>{rec}</div>
+              <div style={{}}><Markdown text={rec} size={14} /></div>
               <button onClick={()=>setRec(null)} style={{ marginTop:14,fontSize:10,color:"var(--text-subtle)",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--font-mono)" }}>← New evaluation</button>
             </InsightCard>
           )}
@@ -1245,7 +1725,7 @@ function FuelingPage({ profile }: { profile:Profile|null }) {
                 ))}
               </div>
             </Card>
-            {plan.ai_notes&&<InsightCard accent="var(--olive)" tag="Nutrition notes"><p style={{ fontSize:13,color:"var(--text-muted)",lineHeight:1.8,fontFamily:"var(--font-display)",fontStyle:"italic" }}>{plan.ai_notes}</p></InsightCard>}
+            {plan.ai_notes&&<InsightCard accent="var(--olive)" tag="Nutrition notes"><p style={{}}><Markdown text={plan.ai_notes} size={13} color="var(--text-muted)" /></p></InsightCard>}
           </div>
         ):(
           <Card style={{ display:"flex",alignItems:"center",justifyContent:"center",minHeight:280 }} p={0}>
@@ -1279,7 +1759,7 @@ function AnalysisPage({ activities }: { activities:Activity[] }) {
           <Btn onClick={run} disabled={loading||!activities.length}>{loading?"Analysing…":"AI Analysis →"}</Btn>
         </div>
       } />
-      {analysis&&<InsightCard accent="var(--olive)" tag="Performance Intelligence"><div style={{ fontSize:13,color:"var(--text-2)",lineHeight:1.85,whiteSpace:"pre-wrap",fontFamily:"var(--font-display)",fontWeight:300 }}>{analysis}</div><button onClick={()=>setAnalysis(null)} style={{ marginTop:10,fontSize:10,color:"var(--text-subtle)",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--font-mono)" }}>close</button></InsightCard>}
+      {analysis&&<InsightCard accent="var(--olive)" tag="Performance Intelligence"><div style={{}}><Markdown text={analysis} size={13} /></div><button onClick={()=>setAnalysis(null)} style={{ marginTop:14,fontSize:10,color:"var(--text-subtle)",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--font-mono)" }}>← close</button></InsightCard>}
 
       <Card p={20}>
         <SectionTitle mono sub={`Weekly load · last ${period} weeks`} right={
@@ -1364,15 +1844,18 @@ function AnalysisPage({ activities }: { activities:Activity[] }) {
 
 // ─── RACES ───────────────────────────────────────────────────────────────────
 
-function RacesPage({ activities }: { activities:Activity[] }) {
+function RacesPage({ activities, profile }: { activities:Activity[]; profile:Profile|null }) {
   const races=activities.filter(a=>a.type==="race");
-  const [sel,setSel]=useState<Activity|null>(races[0]??null);
+  const [sel,setSel]=useState<Activity|null>(null);
+  const [detail,setDetail]=useState<Activity|null>(null);
   const [analysis,setAnalysis]=useState<string|null>(null);
   const [loading,setLoading]=useState(false);
-  const analyze=async()=>{if(!sel)return;setLoading(true);try{const d=await fetch("/api/ai/race",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({activity_id:sel.id})}).then(r=>r.json());setAnalysis(d.analysis??d.error);}catch{setAnalysis("Could not connect to AI.");}finally{setLoading(false);}};
+  const analyze=async(race:Activity)=>{setLoading(true);try{const d=await fetch("/api/ai/race",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({activity_id:race.id})}).then(r=>r.json());setAnalysis(d.analysis??d.error);}catch{setAnalysis("Could not connect to AI.");}finally{setLoading(false);}};
+  const sc=(r:Activity)=>sportColor(r.sport);
 
   return (
     <div style={{ display:"flex",flexDirection:"column",gap:20 }}>
+      {detail&&<ActivityDetailModal act={detail} profile={profile} onClose={()=>setDetail(null)} onEdit={()=>{}} onDelete={()=>{}} />}
       <PageHeader supra="Competition" title="Race Analyzer" />
       {races.length>0&&(
         <div className="op-grid-3" style={{ display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:1,background:"var(--border)",borderRadius:10,overflow:"hidden",border:"1px solid var(--border)" }}>
@@ -1385,39 +1868,56 @@ function RacesPage({ activities }: { activities:Activity[] }) {
           ))}
         </div>
       )}
-      {races.length===0?<Card style={{ textAlign:"center" }} p={52}><EmptyState label="Log a session with type 'race' to analyse it here" /></Card>:(
-        <>
-          <Card p={14}>
-            <div style={{ display:"flex",gap:6,flexWrap:"wrap" }}>
-              {races.map(r=><button key={r.id} onClick={()=>{setSel(r);setAnalysis(null);}} style={{ padding:"6px 12px",borderRadius:5,cursor:"pointer",fontSize:10,border:`1px solid ${sel?.id===r.id?"var(--gold)":"var(--border)"}`,background:sel?.id===r.id?"var(--gold-dim)":"transparent",color:sel?.id===r.id?"var(--gold)":"var(--text-muted)",fontFamily:"var(--font-mono)",letterSpacing:"0.04em" }}>{r.title} · {r.date}</button>)}
-            </div>
-          </Card>
-          {sel&&(
-            <>
-              <Card p={22}>
-                <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:16 }}>
-                  <div>
-                    <p style={{ fontSize:9,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:6,fontFamily:"var(--font-mono)" }}>{sel.sport} · race</p>
-                    <h2 style={{ fontSize:20,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",marginBottom:6 }}>{sel.title}</h2>
-                    <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{sel.date} · {fmtDist(sel.distance_meters,sel.sport)} · {fmtDuration(sel.duration_seconds)}</p>
-                  </div>
-                  <div className="op-race-stats" style={{ display:"flex",gap:24 }}>
-                    {[[sel.avg_heart_rate?`${sel.avg_heart_rate} bpm`:null,"avg hr"],[sel.avg_pace_sec_km?fmtPace(sel.avg_pace_sec_km)+"/km":null,"pace"],[sel.tss?String(sel.tss):null,"tss"],[sel.feel_score?`★${sel.feel_score}`:null,"feel"]].filter(x=>x[0]).map(([v,l])=>(
-                      <div key={l} style={{ textAlign:"right" }}>
-                        <p style={{ fontSize:9,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:5 }}>{l}</p>
-                        <p style={{ fontSize:18,fontWeight:300,fontFamily:"var(--font-display)",color:"var(--text)" }}>{v}</p>
+      {races.length===0?(
+        <Card style={{ textAlign:"center" }} p={52}><EmptyState label="Log a session with type 'race' to analyse it here" /></Card>
+      ):(
+        <div style={{ display:"flex",flexDirection:"column",gap:12 }}>
+          {/* Race list */}
+          {races.map((r,i)=>{
+            const isSelected=sel?.id===r.id;
+            const c=sc(r);
+            return (
+              <Card key={r.id} p={0} style={{ cursor:"pointer",border:`1px solid ${isSelected?"var(--gold)":"var(--border)"}`,transition:"border-color 0.15s",overflow:"hidden" }}>
+                <div style={{ display:"grid",gridTemplateColumns:"4px 1fr",height:"100%" }}>
+                  <div style={{ background:isSelected?"var(--gold)":c+"40" }} />
+                  <div style={{ padding:"14px 18px" }}>
+                    <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:12,flexWrap:"wrap" }}>
+                      <div style={{ display:"flex",gap:12,alignItems:"center" }} onClick={()=>setDetail(r)}>
+                        <div style={{ width:36,height:36,borderRadius:8,background:c+"12",border:"1px solid "+c+"22",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+                          <SportIcon sport={r.sport} color={c} size={15} />
+                        </div>
+                        <div>
+                          <p style={{ fontSize:14,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)",marginBottom:3,lineHeight:1.2 }}>{r.title}</p>
+                          <p style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{r.date} · {fmtDist(r.distance_meters,r.sport)} · {fmtDuration(r.duration_seconds)}</p>
+                        </div>
                       </div>
-                    ))}
+                      {/* Quick stats */}
+                      <div style={{ display:"flex",gap:20,alignItems:"center",flexWrap:"wrap" }}>
+                        {r.avg_heart_rate&&<div style={{ textAlign:"right" }}><p style={{ fontSize:9,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3 }}>avg hr</p><p style={{ fontSize:14,fontWeight:300,fontFamily:"var(--font-display)",color:"var(--text)" }}>{r.avg_heart_rate} bpm</p></div>}
+                        {r.avg_pace_sec_km&&<div style={{ textAlign:"right" }}><p style={{ fontSize:9,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3 }}>pace</p><p style={{ fontSize:14,fontWeight:300,fontFamily:"var(--font-display)",color:"var(--olive)" }}>{fmtPace(r.avg_pace_sec_km)}/km</p></div>}
+                        {r.tss&&<div style={{ textAlign:"right" }}><p style={{ fontSize:9,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3 }}>tss</p><p style={{ fontSize:14,fontWeight:300,fontFamily:"var(--font-display)",color:tssColor(r.tss) }}>{r.tss}</p></div>}
+                        {r.feel_score&&<div style={{ textAlign:"right" }}><p style={{ fontSize:9,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3 }}>feel</p><p style={{ fontSize:14,fontWeight:300,fontFamily:"var(--font-display)",color:"var(--gold)" }}>★{r.feel_score}</p></div>}
+                        {/* Action buttons */}
+                        <div style={{ display:"flex",gap:6,marginLeft:8 }}>
+                          <button onClick={()=>setDetail(r)} style={{ padding:"6px 12px",borderRadius:5,cursor:"pointer",fontSize:10,border:"1px solid var(--border)",background:"transparent",color:"var(--text-muted)",fontFamily:"var(--font-mono)",letterSpacing:"0.04em" }}>Detail →</button>
+                          <button onClick={()=>{setSel(r);setAnalysis(null);analyze(r);}} style={{ padding:"6px 12px",borderRadius:5,cursor:"pointer",fontSize:10,border:`1px solid ${isSelected?"var(--gold)":"var(--border)"}`,background:isSelected?"var(--gold-dim)":"transparent",color:isSelected?"var(--gold)":"var(--text-muted)",fontFamily:"var(--font-mono)",letterSpacing:"0.04em" }}>{loading&&sel?.id===r.id?"Analysing…":"AI →"}</button>
+                        </div>
+                      </div>
+                    </div>
+                    {/* AI analysis inline */}
+                    {sel?.id===r.id&&analysis&&(
+                      <div style={{ marginTop:14,paddingTop:14,borderTop:"1px solid var(--border)" }}>
+                        <InsightCard accent="var(--gold)" tag="Race Analysis · AI">
+                          <div><Markdown text={analysis} size={12} /></div>
+                        </InsightCard>
+                      </div>
+                    )}
                   </div>
                 </div>
               </Card>
-              <div>
-                <Btn onClick={analyze} disabled={loading}>{loading?"Analysing…":"AI race analysis →"}</Btn>
-              </div>
-              {analysis&&<InsightCard accent="var(--gold)" tag="Race Analysis · AI"><div style={{ fontSize:13,color:"var(--text-2)",lineHeight:1.85,whiteSpace:"pre-wrap",fontFamily:"var(--font-display)",fontWeight:300 }}>{analysis}</div></InsightCard>}
-            </>
-          )}
-        </>
+            );
+          })}
+        </div>
       )}
     </div>
   );
@@ -1425,7 +1925,7 @@ function RacesPage({ activities }: { activities:Activity[] }) {
 
 // ─── ACTIVITIES PAGE ──────────────────────────────────────────────────────────
 
-function ActivitiesPage({ activities, onRefresh }: { activities:Activity[]; onRefresh:()=>void }) {
+function ActivitiesPage({ activities, profile, onRefresh }: { activities:Activity[]; profile:Profile|null; onRefresh:()=>void }) {
   const [showForm,setShowForm]=useState(false);
   const [saving,setSaving]=useState(false);
   const [editTarget,setEditTarget]=useState<Activity|null>(null);
@@ -1456,7 +1956,7 @@ function ActivitiesPage({ activities, onRefresh }: { activities:Activity[]; onRe
       {toast&&<Toast message={toast.message} type={toast.type} onDone={()=>setToast(null)} />}
       {(showForm&&!editTarget)&&<ActivityFormModal onSave={handleSave} onClose={()=>setShowForm(false)} saving={saving} />}
       {editTarget&&<ActivityFormModal initial={actToForm(editTarget)} onSave={handleSave} onClose={()=>setEditTarget(null)} saving={saving} />}
-      {detailTarget&&<ActivityDetailModal act={detailTarget} onClose={()=>setDetailTarget(null)} onEdit={a=>{setDetailTarget(null);setEditTarget(a);}} onDelete={id=>{setDetailTarget(null);setDeleteTarget(id);}} />}
+      {detailTarget&&<ActivityDetailModal act={detailTarget} profile={profile} onClose={()=>setDetailTarget(null)} onEdit={a=>{setDetailTarget(null);setEditTarget(a);}} onDelete={id=>{setDetailTarget(null);setDeleteTarget(id);}} />}
 
       <PageHeader supra="Training log" title="Activities" action={<Btn onClick={()=>{setShowForm(true);setEditTarget(null);}}>+ Log activity</Btn>} />
 
@@ -1504,88 +2004,205 @@ function ActivitiesPage({ activities, onRefresh }: { activities:Activity[]; onRe
 // ─── PROFILE ─────────────────────────────────────────────────────────────────
 
 function ProfilePage({ profile, onSaved }: { profile:Profile|null; onSaved:()=>void }) {
-  const [f,setF]=useState({full_name:profile?.full_name??"",sport:profile?.sport??"running",weight_kg:profile?.weight_kg?String(profile.weight_kg):"",height_cm:profile?.height_cm?String(profile.height_cm):"",birth_date:profile?.birth_date??"",ftp_watts:profile?.ftp_watts?String(profile.ftp_watts):"",lthr:profile?.lthr?String(profile.lthr):"",vdot:profile?.vdot?String(profile.vdot):"" });
+  const mob = useIsMobile();
+  const [f,setF]=useState({
+    full_name: profile?.full_name??"",
+    sport:     profile?.sport??"running",
+    weight_kg: profile?.weight_kg ? String(profile.weight_kg) : "",
+    height_cm: profile?.height_cm ? String(profile.height_cm) : "",
+    birth_date:profile?.birth_date??"",
+    ftp_watts: profile?.ftp_watts ? String(profile.ftp_watts) : "",
+    lthr:      profile?.lthr ? String(profile.lthr) : "",
+    vdot:      profile?.vdot ? String(profile.vdot) : "",
+  });
   const [saving,setSaving]=useState(false);
   const [toast,setToast]=useState<{message:string;type:"success"|"error"}|null>(null);
   const s=(k:string)=>(v:string)=>setF(p=>({...p,[k]:v}));
 
-  const save=async()=>{setSaving(true);try{const res=await fetch("/api/profile",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({...f,weight_kg:f.weight_kg?parseFloat(f.weight_kg):null,height_cm:f.height_cm?parseFloat(f.height_cm):null,ftp_watts:f.ftp_watts?parseInt(f.ftp_watts):null,lthr:f.lthr?parseInt(f.lthr):null,vdot:f.vdot?parseFloat(f.vdot):null})});if(!res.ok)throw new Error();setToast({message:"Profile saved",type:"success"});onSaved();}catch{setToast({message:"Error saving",type:"error"});}finally{setSaving(false);}};
+  const save=async()=>{
+    setSaving(true);
+    try {
+      const res=await fetch("/api/profile",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+        ...f,
+        weight_kg: f.weight_kg?parseFloat(f.weight_kg):null,
+        height_cm: f.height_cm?parseFloat(f.height_cm):null,
+        ftp_watts: f.ftp_watts?parseInt(f.ftp_watts):null,
+        lthr:      f.lthr?parseInt(f.lthr):null,
+        vdot:      f.vdot?parseFloat(f.vdot):null,
+      })});
+      if(!res.ok) throw new Error();
+      setToast({message:"Profile saved",type:"success"});
+      onSaved();
+    } catch { setToast({message:"Error saving profile",type:"error"}); }
+    finally { setSaving(false); }
+  };
 
-  const ftp=parseInt(f.ftp_watts);
-  const lthr=parseInt(f.lthr);
-  const age=f.birth_date?Math.floor((Date.now()-new Date(f.birth_date).getTime())/31557600000):null;
+  const ftp  = parseInt(f.ftp_watts)||0;
+  const lthr = parseInt(f.lthr)||0;
+  const vdot = parseFloat(f.vdot)||0;
+  const wkg  = ftp && f.weight_kg ? Math.round((ftp/parseFloat(f.weight_kg))*100)/100 : null;
+  const age  = f.birth_date ? Math.floor((Date.now()-new Date(f.birth_date).getTime())/31557600000) : null;
+  const initials = f.full_name ? f.full_name.split(" ").map(n=>n[0]).join("").slice(0,2).toUpperCase() : "AT";
+
+  // Compact inline field — label + input on same row
+  const Row = ({ label, hint, children }: { label:string; hint?:string; children:React.ReactNode }) => (
+    <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,alignItems:"center",padding:"8px 0",borderBottom:"1px solid var(--border)" }}>
+      <div style={{ display:"flex",alignItems:"center",gap:4 }}>
+        <span style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.07em" }}>{label}</span>
+        {hint&&<HintIcon text={hint} />}
+      </div>
+      {children}
+    </div>
+  );
+
+  // Zone table compact
+  const ZoneTable = ({ zones }: { zones:{z:string;n:string;val:string;color:string}[] }) => (
+    <div style={{ display:"flex",flexDirection:"column",gap:0 }}>
+      {zones.map((z,i)=>(
+        <div key={z.z} style={{ display:"grid",gridTemplateColumns:"28px 1fr auto",gap:8,alignItems:"center",padding:"5px 0",borderTop:i>0?"1px solid var(--border)":"none" }}>
+          <span style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",letterSpacing:"0.05em" }}>{z.z}</span>
+          <div style={{ display:"flex",alignItems:"center",gap:6 }}>
+            <div style={{ width:3,height:10,borderRadius:2,background:z.color,flexShrink:0 }} />
+            <span style={{ fontSize:11,color:"var(--text-muted)" }}>{z.n}</span>
+          </div>
+          <span style={{ fontSize:11,color:"var(--text)",fontFamily:"var(--font-mono)",letterSpacing:"0.02em" }}>{z.val}</span>
+        </div>
+      ))}
+    </div>
+  );
+
+  const powerZones = ftp>0 ? [
+    {z:"Z1",n:"Recovery",  color:"#6B8F71",val:`${Math.round(ftp*0.01)}–${Math.round(ftp*0.55)}W`},
+    {z:"Z2",n:"Endurance", color:"#4A7C8E",val:`${Math.round(ftp*0.56)}–${Math.round(ftp*0.75)}W`},
+    {z:"Z3",n:"Tempo",     color:"#7E8E4A",val:`${Math.round(ftp*0.76)}–${Math.round(ftp*0.90)}W`},
+    {z:"Z4",n:"Threshold", color:"#C8A84E",val:`${Math.round(ftp*0.91)}–${Math.round(ftp*1.05)}W`},
+    {z:"Z5",n:"VO₂Max",   color:"#C87840",val:`${Math.round(ftp*1.06)}–${Math.round(ftp*1.20)}W`},
+    {z:"Z6",n:"Anaerobic", color:"#C84040",val:`${Math.round(ftp*1.21)}–${Math.round(ftp*1.50)}W`},
+  ] : [];
+
+  const hrZones = lthr>0 ? [
+    {z:"Z1",n:"Recovery",  color:"#6B8F71",val:`< ${Math.round(lthr*0.85)} bpm`},
+    {z:"Z2",n:"Aerobic",   color:"#4A7C8E",val:`${Math.round(lthr*0.85)}–${Math.round(lthr*0.89)} bpm`},
+    {z:"Z3",n:"Tempo",     color:"#7E8E4A",val:`${Math.round(lthr*0.90)}–${Math.round(lthr*0.94)} bpm`},
+    {z:"Z4",n:"Threshold", color:"#C8A84E",val:`${Math.round(lthr*0.95)}–${Math.round(lthr*0.99)} bpm`},
+    {z:"Z5a",n:"VO₂Max",  color:"#C87840",val:`${Math.round(lthr*1.00)}–${Math.round(lthr*1.02)} bpm`},
+    {z:"Z5b",n:"Speed",    color:"#C84040",val:`> ${Math.round(lthr*1.03)} bpm`},
+  ] : [];
+
+  // VDOT training paces (Jack Daniels)
+  const vdotPaces = vdot>0 ? (() => {
+    // Formula approximation: pace in sec/km
+    const easyPace = Math.round(3600 / (vdot * 0.135));
+    const marathonPace = Math.round(3600 / (vdot * 0.163));
+    const thresholdPace = Math.round(3600 / (vdot * 0.177));
+    const intervalPace = Math.round(3600 / (vdot * 0.195));
+    const repPace = Math.round(3600 / (vdot * 0.215));
+    return [
+      {z:"E", n:"Easy",      color:"#6B8F71", val:fmtPace(easyPace)+"/km"},
+      {z:"M", n:"Marathon",  color:"#4A7C8E", val:fmtPace(marathonPace)+"/km"},
+      {z:"T", n:"Threshold", color:"#C8A84E", val:fmtPace(thresholdPace)+"/km"},
+      {z:"I", n:"Interval",  color:"#C87840", val:fmtPace(intervalPace)+"/km"},
+      {z:"R", n:"Repetition",color:"#C84040", val:fmtPace(repPace)+"/km"},
+    ];
+  })() : [];
 
   return (
-    <div style={{ display:"flex",flexDirection:"column",gap:20 }}>
+    <div style={{ display:"flex",flexDirection:"column",gap:16 }}>
       {toast&&<Toast message={toast.message} type={toast.type} onDone={()=>setToast(null)} />}
       <PageHeader supra="Account" title="Athlete Profile" />
 
-      <Card p={20} style={{ display:"flex",alignItems:"center",gap:16 }}>
-        <div style={{ width:48,height:48,borderRadius:"50%",background:"var(--gold-dim)",border:"1px solid var(--gold)25",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
-          <span style={{ fontSize:18,fontWeight:300,color:"var(--gold)",fontFamily:"var(--font-display)" }}>
-            {f.full_name?f.full_name.split(" ").map(n=>n[0]).join("").slice(0,2).toUpperCase():"AT"}
-          </span>
+      {/* ── Hero card ── */}
+      <Card p={16}>
+        <div style={{ display:"flex",alignItems:"center",gap:14 }}>
+          <div style={{ width:52,height:52,borderRadius:"50%",background:"var(--gold-dim)",border:"2px solid var(--gold)30",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+            <span style={{ fontSize:18,fontWeight:300,color:"var(--gold)",fontFamily:"var(--font-display)",lineHeight:1 }}>{initials}</span>
+          </div>
+          <div style={{ flex:1,minWidth:0 }}>
+            <p style={{ fontSize:16,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)",marginBottom:3,lineHeight:1.2 }}>{f.full_name||"Athlete"}</p>
+            <div style={{ display:"flex",gap:6,flexWrap:"wrap" }}>
+              <Badge color="var(--gold)">{f.sport}</Badge>
+              {age&&<Badge color="var(--stone)">{age}y</Badge>}
+              {wkg&&<Badge color="var(--olive)">{wkg} W/kg</Badge>}
+              {ftp>0&&<Badge color="var(--terra)">FTP {ftp}W</Badge>}
+              {lthr>0&&<Badge color="var(--stone)">LTHR {lthr}</Badge>}
+              {vdot>0&&<Badge color="var(--stone)">VDOT {vdot}</Badge>}
+            </div>
+          </div>
+          <Btn onClick={save} disabled={saving} style={{ flexShrink:0 }}>{saving?"Saving…":"Save"}</Btn>
         </div>
-        <div style={{ flex:1 }}>
-          <p style={{ fontSize:15,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)",marginBottom:2 }}>{f.full_name||"Athlete"}</p>
-          <p style={{ fontSize:10,color:"var(--text-muted)",textTransform:"capitalize",fontFamily:"var(--font-mono)" }}>{f.sport}{age?` · ${age}y`:""}</p>
-        </div>
-        <Btn onClick={save} disabled={saving}>{saving?"Saving…":"Save profile"}</Btn>
       </Card>
 
-      <div className="op-grid-2" style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,alignItems:"start" }}>
-        <Card p={22}>
-          <SectionTitle mono>Personal details</SectionTitle>
-          <div style={{ display:"flex",flexDirection:"column",gap:13 }}>
-            <Field label="Full name"><Input value={f.full_name} onChange={s("full_name")} placeholder="Carlos Almeida" /></Field>
-            <Field label="Date of birth"><Input type="date" value={f.birth_date} onChange={s("birth_date")} /></Field>
-            <Field label="Weight (kg)" hint="Used for fueling and power/weight metrics"><Input value={f.weight_kg} onChange={s("weight_kg")} placeholder="72" /></Field>
-            <Field label="Height (cm)"><Input value={f.height_cm} onChange={s("height_cm")} placeholder="178" /></Field>
-            <Field label="Primary sport"><Sel value={f.sport} onChange={s("sport")} options={["running","cycling","swimming","triathlon","strength"]} /></Field>
-          </div>
-        </Card>
+      {/* ── Main grid ── */}
+      <div style={{ display:"grid",gridTemplateColumns:mob?"1fr":"1fr 1fr",gap:14,alignItems:"start" }}>
 
-        <div style={{ display:"flex",flexDirection:"column",gap:13 }}>
-          <Card p={22}>
-            <SectionTitle mono>Performance thresholds</SectionTitle>
-            <div style={{ display:"flex",flexDirection:"column",gap:13 }}>
-              <Field label="FTP (Watts)" hint="Functional Threshold Power — max average power for ~1 hour. Foundation for cycling TSS and zone calculation."><Input value={f.ftp_watts} onChange={s("ftp_watts")} placeholder="280" /></Field>
-              <Field label="LTHR (bpm)" hint="Lactate Threshold Heart Rate — used for running and cycling HR zones (Friel model)."><Input value={f.lthr} onChange={s("lthr")} placeholder="168" /></Field>
-              <Field label="VDOT" hint="Jack Daniels' aerobic fitness index derived from race performances. Used for running training paces."><Input value={f.vdot} onChange={s("vdot")} placeholder="52.5" /></Field>
+        {/* LEFT col: personal + thresholds */}
+        <div style={{ display:"flex",flexDirection:"column",gap:14 }}>
+          <Card p={16}>
+            <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.14em",fontFamily:"var(--font-mono)",marginBottom:10 }}>Personal</p>
+            <div>
+              <Row label="Name"><Input value={f.full_name} onChange={s("full_name")} placeholder="Carlos Almeida" /></Row>
+              <Row label="Born"><Input type="date" value={f.birth_date} onChange={s("birth_date")} /></Row>
+              <Row label="Weight" hint="Used for W/kg and fueling calculations"><Input value={f.weight_kg} onChange={s("weight_kg")} placeholder="72 kg" /></Row>
+              <Row label="Height"><Input value={f.height_cm} onChange={s("height_cm")} placeholder="178 cm" /></Row>
+              <Row label="Sport">
+                <Sel value={f.sport} onChange={s("sport")} options={["running","cycling","swimming","triathlon","strength"]} />
+              </Row>
             </div>
           </Card>
 
-          {ftp>0&&(
-            <Card p={18}>
-              <SectionTitle mono sub="Coggan model">Power zones</SectionTitle>
-              <table style={{ width:"100%" }}>
-                <tbody>
-                  {[{z:"Z1",n:"Recovery",lo:0.01,hi:0.55},{z:"Z2",n:"Endurance",lo:0.56,hi:0.75},{z:"Z3",n:"Tempo",lo:0.76,hi:0.9},{z:"Z4",n:"Threshold",lo:0.91,hi:1.05},{z:"Z5",n:"VO₂Max",lo:1.06,hi:1.2},{z:"Z6",n:"Anaerobic",lo:1.21,hi:1.5}].map((z,i)=>(
-                    <tr key={z.z} style={{ borderTop:i>0?"1px solid var(--border)":"none" }}>
-                      <td style={{ padding:"6px 0",fontSize:9,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",width:20 }}>{z.z}</td>
-                      <td style={{ padding:"6px 0",fontSize:11,color:"var(--text)",fontWeight:400 }}>{z.n}</td>
-                      <td style={{ padding:"6px 0",fontSize:11,color:"var(--text)",fontFamily:"var(--font-mono)",textAlign:"right" }}>{Math.round(ftp*z.lo)}–{Math.round(ftp*z.hi)}W</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <Card p={16}>
+            <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.14em",fontFamily:"var(--font-mono)",marginBottom:10 }}>Performance thresholds</p>
+            <div>
+              <Row label="FTP" hint="Functional Threshold Power — max 1h average power. Powers TSS, IF and all cycling zones.">
+                <Input value={f.ftp_watts} onChange={s("ftp_watts")} placeholder="280 W" />
+              </Row>
+              <Row label="LTHR" hint="Lactate Threshold Heart Rate (Friel model). Used for HR zone distribution in activity analysis.">
+                <Input value={f.lthr} onChange={s("lthr")} placeholder="168 bpm" />
+              </Row>
+              <Row label="VDOT" hint="Jack Daniels aerobic index from race times. Determines E / M / T / I / R training paces.">
+                <Input value={f.vdot} onChange={s("vdot")} placeholder="52.5" />
+              </Row>
+            </div>
+          </Card>
+        </div>
+
+        {/* RIGHT col: zone tables */}
+        <div style={{ display:"flex",flexDirection:"column",gap:14 }}>
+          {powerZones.length>0&&(
+            <Card p={16}>
+              <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10 }}>
+                <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.14em",fontFamily:"var(--font-mono)" }}>Power zones</p>
+                <span style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)" }}>Coggan · FTP {ftp}W</span>
+              </div>
+              <ZoneTable zones={powerZones} />
             </Card>
           )}
 
-          {lthr>0&&(
-            <Card p={18}>
-              <SectionTitle mono sub="Friel model">HR zones</SectionTitle>
-              <table style={{ width:"100%" }}>
-                <tbody>
-                  {[{z:"Z1",n:"Recovery",lo:0,hi:0.85},{z:"Z2",n:"Aerobic",lo:0.85,hi:0.89},{z:"Z3",n:"Tempo",lo:0.9,hi:0.94},{z:"Z4",n:"Threshold",lo:0.95,hi:0.99},{z:"Z5a",n:"VO₂Max",lo:1.0,hi:1.02},{z:"Z5b",n:"Speed",lo:1.03,hi:1.06}].map((z,i)=>(
-                    <tr key={z.z} style={{ borderTop:i>0?"1px solid var(--border)":"none" }}>
-                      <td style={{ padding:"6px 0",fontSize:9,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",width:28 }}>{z.z}</td>
-                      <td style={{ padding:"6px 0",fontSize:11,color:"var(--text)" }}>{z.n}</td>
-                      <td style={{ padding:"6px 0",fontSize:11,color:"var(--text)",fontFamily:"var(--font-mono)",textAlign:"right" }}>{Math.round(lthr*z.lo)}–{Math.round(lthr*z.hi)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {hrZones.length>0&&(
+            <Card p={16}>
+              <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10 }}>
+                <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.14em",fontFamily:"var(--font-mono)" }}>HR zones</p>
+                <span style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)" }}>Friel · LTHR {lthr} bpm</span>
+              </div>
+              <ZoneTable zones={hrZones} />
+            </Card>
+          )}
+
+          {vdotPaces.length>0&&(
+            <Card p={16}>
+              <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10 }}>
+                <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.14em",fontFamily:"var(--font-mono)" }}>Training paces</p>
+                <span style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)" }}>Daniels · VDOT {vdot}</span>
+              </div>
+              <ZoneTable zones={vdotPaces} />
+            </Card>
+          )}
+
+          {!ftp&&!lthr&&!vdot&&(
+            <Card p={20} style={{ textAlign:"center",opacity:0.6 }}>
+              <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",lineHeight:1.7 }}>
+                Add FTP, LTHR or VDOT above to see your power zones, HR zones and training paces automatically calculated.
+              </p>
             </Card>
           )}
         </div>
@@ -1891,38 +2508,55 @@ function Sidebar({ active, onChange, profile, onSignOut, dark, onToggleTheme }: 
 
   // ── MOBILE: horizontal bottom tab bar ────────────────────────────────────
   if (mob) {
+    const allTabs = [
+      ...NAV,
+      { id:"profile" as PageId, label:"Profile", Icon:({ size=20, active=false }: {size?:number;active?:boolean}) => (
+        <div style={{ width:size,height:size,borderRadius:"50%",background:active?"var(--gold)":"var(--border)",display:"flex",alignItems:"center",justifyContent:"center" }}>
+          <span style={{ fontSize:size*0.45,fontWeight:700,color:active?"#0A0A08":"var(--text-muted)",fontFamily:"var(--font-display)",lineHeight:1 }}>{initials}</span>
+        </div>
+      )},
+    ];
     return (
       <aside style={{
         position:"fixed", bottom:0, left:0, right:0, zIndex:200,
-        height:58,
         background:"var(--surface)",
         borderTop:"1px solid var(--border)",
-        display:"flex",
-        flexDirection:"row",
-        alignItems:"stretch",
+        display:"flex", flexDirection:"column",
       }}>
-        {NAV.map(({ id, label, Icon }) => {
-          const a = active === id;
-          return (
-            <button key={id} onClick={() => onChange(id)}
-              style={{
-                flex:1,
-                display:"flex",
-                flexDirection:"column",
-                alignItems:"center",
-                justifyContent:"center",
-                border:"none",
-                borderTop: a ? "2px solid var(--gold)" : "2px solid transparent",
-                background: a ? "var(--gold-dim)" : "transparent",
-                color: a ? "var(--gold)" : "var(--text-muted)",
-                cursor:"pointer",
-                padding:0,
-                gap:0,
-              }}>
-              <Icon size={20} active={a} />
-            </button>
-          );
-        })}
+        {/* Tab row */}
+        <div style={{ display:"flex", flexDirection:"row", alignItems:"stretch", height:54 }}>
+          {allTabs.map(({ id, label, Icon }) => {
+            const a = active === id;
+            return (
+              <button key={id} onClick={() => onChange(id)}
+                style={{
+                  flex:1, display:"flex", flexDirection:"column",
+                  alignItems:"center", justifyContent:"center",
+                  border:"none",
+                  borderTop: a ? "2px solid var(--gold)" : "2px solid transparent",
+                  background: a ? "var(--gold-dim)" : "transparent",
+                  color: a ? "var(--gold)" : "var(--text-muted)",
+                  cursor:"pointer", padding:0, gap:0,
+                  WebkitTapHighlightColor:"transparent",
+                }}>
+                <Icon size={20} active={a} />
+              </button>
+            );
+          })}
+          {/* Theme toggle */}
+          <button onClick={onToggleTheme} style={{
+            width:48, display:"flex", flexDirection:"column",
+            alignItems:"center", justifyContent:"center",
+            border:"none", borderTop:"2px solid transparent",
+            background:"transparent", color:"var(--text-muted)",
+            cursor:"pointer", padding:0, flexShrink:0,
+            WebkitTapHighlightColor:"transparent",
+          }}>
+            {dark ? <IconSun size={20} /> : <IconMoon size={20} />}
+          </button>
+        </div>
+        {/* iOS safe area spacer */}
+        <div style={{ height:"env(safe-area-inset-bottom,0px)", background:"var(--surface)" }} />
       </aside>
     );
   }
@@ -2086,8 +2720,8 @@ export function AppShell() {
               case "coach":      return <CoachPage activities={activities} metrics={todayMetrics} onLogWellness={()=>setWellnessOpen(true)} />;
               case "fueling":    return <FuelingPage profile={profile} />;
               case "analysis":   return <AnalysisPage activities={activities} />;
-              case "races":      return <RacesPage activities={activities} />;
-              case "activities": return <ActivitiesPage activities={activities} onRefresh={load} />;
+              case "races":      return <RacesPage activities={activities} profile={profile} />;
+              case "activities": return <ActivitiesPage activities={activities} profile={profile} onRefresh={load} />;
               case "sync":       return <SyncPage onRefresh={load} />;
               case "profile":    return <ProfilePage profile={profile} onSaved={load} />;
             }
