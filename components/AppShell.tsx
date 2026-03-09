@@ -2214,7 +2214,7 @@ function RacesPage({ activities, profile, goal, onGoalChange }: { activities:Act
         <div style={{ display:"grid",gridTemplateColumns:"1fr auto auto",gap:1,background:"var(--border)",borderRadius:8,overflow:"hidden" }}>
           <div style={{ background:"var(--surface)",padding:"11px 16px",display:"flex",gap:16,alignItems:"center",flexWrap:"wrap" }}>
             <div>
-              <p style={{ fontSize:8,color:"var(--gold)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:2 }}>🎯 Goal race</p>
+              <p style={{ fontSize:8,color:"var(--gold)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:2 }}>Goal race</p>
               <p style={{ fontSize:14,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)",lineHeight:1 }}>{goal.name}</p>
               <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",marginTop:2 }}>{goal.distance}{goal.targetTime?` · target ${goal.targetTime}`:""}</p>
             </div>
@@ -3184,32 +3184,6 @@ function SyncPage({ onRefresh }: { onRefresh: () => void }) {
               <p style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>{s}</p>
             </div>
           ))}
-        </div>
-      </Card>
-
-      {/* ── SETUP GUIDE ── */}
-      <Card p={22}>
-        <SectionTitle mono sub="Add to your .env.local and Vercel environment variables">Strava API setup</SectionTitle>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {[
-            { step: "1", text: "Go to strava.com/settings/api and create an app" },
-            { step: "2", text: 'Set Authorization Callback Domain to your Vercel URL (e.g. olympeaks.vercel.app)' },
-            { step: "3", text: "Copy Client ID and Client Secret" },
-            { step: "4", text: "Add to Vercel: STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET, NEXT_PUBLIC_APP_URL" },
-          ].map(({ step, text }) => (
-            <div key={step} style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: "10px 0", borderBottom: step !== "4" ? "1px solid var(--border)" : "none" }}>
-              <div style={{ width: 20, height: 20, borderRadius: "50%", border: "1px solid var(--gold)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
-                <span style={{ fontSize: 9, color: "var(--gold)", fontFamily: "var(--font-mono)", fontWeight: 700 }}>{step}</span>
-              </div>
-              <p style={{ fontSize: 11, color: "var(--text-muted)", lineHeight: 1.6, fontFamily: "var(--font-mono)" }}>{text}</p>
-            </div>
-          ))}
-        </div>
-        <div style={{ marginTop: 16, padding: "12px 14px", background: "var(--bg)", borderRadius: 6, fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--text-muted)", lineHeight: 1.8 }}>
-          <span style={{ color: "var(--text-subtle)" }}># .env.local</span><br />
-          STRAVA_CLIENT_ID=<span style={{ color: "var(--gold)" }}>your_client_id</span><br />
-          STRAVA_CLIENT_SECRET=<span style={{ color: "var(--gold)" }}>your_client_secret</span><br />
-          NEXT_PUBLIC_APP_URL=<span style={{ color: "var(--gold)" }}>https://olympeaks.vercel.app</span>
         </div>
       </Card>
     </div>
