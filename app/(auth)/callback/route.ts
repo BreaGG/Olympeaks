@@ -1,11 +1,14 @@
-// PATH: app/(auth)/callback/route.ts
-import { NextResponse } from "next/server";
+// PATH: app/auth/callback/route.ts
+import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
-export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
   const code = searchParams.get("code");
+  const next = searchParams.get("next") ?? "/";
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? req.nextUrl.origin;
 
   if (code) {
     const cookieStore = await cookies();
@@ -15,17 +18,17 @@ export async function GET(request: Request) {
       {
         cookies: {
           getAll() { return cookieStore.getAll(); },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          },
+          setAll(cs) { cs.forEach(({ name, value, options }) => cookieStore.set(name, value, options)); },
         },
       }
     );
+
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) return NextResponse.redirect(`${origin}/`);
+    if (!error) {
+      return NextResponse.redirect(`${appUrl}${next}`);
+    }
   }
 
-  return NextResponse.redirect(`${origin}/login?error=auth`);
+  // Auth failed — back to login with error
+  return NextResponse.redirect(`${appUrl}/login?error=auth_failed`);
 }

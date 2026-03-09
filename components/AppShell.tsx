@@ -36,7 +36,7 @@ function Markdown({ text, size=13, color="var(--text-2)" }: { text:string; size?
     if (l.startsWith("```")) {
       const code: string[] = []; i++;
       while (i < lines.length && !lines[i].startsWith("```")) { code.push(lines[i]); i++; }
-      els.push(<pre key={k++} style={{fontFamily:"var(--font-mono)",fontSize:11,background:"var(--surface-hi)",border:"1px solid var(--border)",borderRadius:6,padding:"10px 14px",overflowX:"auto",color:"var(--text-muted)",lineHeight:1.6,margin:"8px 0"}}>{code.join("\n")}</pre>); i++; continue;
+      els.push(<pre key={k++} style={{fontFamily:"var(--font-mono)",fontSize:12,background:"var(--surface-hi)",border:"1px solid var(--border)",borderRadius:6,padding:"10px 14px",overflowX:"auto",color:"var(--text-muted)",lineHeight:1.6,margin:"8px 0"}}>{code.join("\n")}</pre>); i++; continue;
     }
     const h1=l.match(/^#\s+(.+)/); if(h1){ els.push(<h3 key={k++} style={{fontFamily:"var(--font-display)",fontStyle:"italic",fontSize:size+5,fontWeight:300,color:"var(--text)",letterSpacing:"-0.02em",margin:"14px 0 4px",lineHeight:1.2}}>{inline(h1[1])}</h3>); i++; continue; }
     const h2=l.match(/^##\s+(.+)/); if(h2){ els.push(<h4 key={k++} style={{fontFamily:"var(--font-display)",fontStyle:"italic",fontSize:size+3,fontWeight:300,color:"var(--text)",letterSpacing:"-0.01em",margin:"12px 0 4px",lineHeight:1.2}}>{inline(h2[1])}</h4>); i++; continue; }
@@ -317,12 +317,12 @@ function LabValue({ label, value, unit, color="var(--text)", hint, size="lg" }: 
   return (
     <div>
       <div style={{ display:"flex",alignItems:"center",gap:5,marginBottom:size==="lg"?10:6 }}>
-        <p style={{ fontSize:9,color:"var(--text-muted)",letterSpacing:"0.14em",textTransform:"uppercase",fontWeight:600,fontFamily:"var(--font-mono)" }}>{label}</p>
+        <p style={{ fontSize:10,color:"var(--text-muted)",letterSpacing:"0.14em",textTransform:"uppercase",fontWeight:600,fontFamily:"var(--font-mono)" }}>{label}</p>
         {hint && <HintIcon text={hint} />}
       </div>
       <div style={{ display:"flex",alignItems:"baseline",gap:3 }}>
         <span style={{ fontSize:size==="lg"?26:18,fontWeight:300,fontFamily:"var(--font-display)",color,letterSpacing:"-0.03em",lineHeight:1 }}>{value}</span>
-        {unit && <span style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)",letterSpacing:"0.04em" }}>{unit}</span>}
+        {unit && <span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",letterSpacing:"0.04em" }}>{unit}</span>}
       </div>
     </div>
   );
@@ -357,7 +357,7 @@ function HintIcon({ text }: { text:string }) {
         onMouseLeave={()=>setShow(false)}
         style={{ width:13,height:13,borderRadius:"50%",border:"1px solid var(--border-hi)",background:"transparent",cursor:"help",fontSize:8,color:"var(--text-subtle)",display:"inline-flex",alignItems:"center",justifyContent:"center",flexShrink:0,padding:0,fontFamily:"var(--font-mono)",letterSpacing:0 }}>?</button>
       {show&&(
-        <div style={{ position:"fixed",left:xy.x,top:xy.y-10,transform:"translate(-50%,-100%)",background:"var(--text)",color:"var(--bg)",fontSize:11,lineHeight:1.55,padding:"7px 12px",borderRadius:6,maxWidth:240,boxShadow:"0 4px 20px rgba(0,0,0,0.25)",zIndex:9999,pointerEvents:"none",textAlign:"center",fontFamily:"var(--font-body)" }}>
+        <div style={{ position:"fixed",left:xy.x,top:xy.y-10,transform:"translate(-50%,-100%)",background:"var(--text)",color:"var(--bg)",fontSize:12,lineHeight:1.55,padding:"7px 12px",borderRadius:6,maxWidth:240,boxShadow:"0 4px 20px rgba(0,0,0,0.25)",zIndex:9999,pointerEvents:"none",textAlign:"center",fontFamily:"var(--font-body)" }}>
           {text}
         </div>
       )}
@@ -371,12 +371,12 @@ interface TE { name?:string; value?:number|string; color?:string; }
 function OTooltip({ active, payload, label }: { active?:boolean; payload?:TE[]; label?:string }) {
   if (!active||!payload?.length) return null;
   return (
-    <div style={{ background:"var(--surface)",border:"1px solid var(--border)",borderRadius:6,padding:"10px 14px",fontSize:11,boxShadow:"0 4px 24px rgba(0,0,0,0.12)" }}>
-      <p style={{ color:"var(--text-muted)",marginBottom:6,fontSize:9,fontFamily:"var(--font-mono)",letterSpacing:"0.1em",textTransform:"uppercase" }}>{label}</p>
+    <div style={{ background:"var(--surface)",border:"1px solid var(--border)",borderRadius:6,padding:"10px 14px",fontSize:12,boxShadow:"0 4px 24px rgba(0,0,0,0.12)" }}>
+      <p style={{ color:"var(--text-muted)",marginBottom:6,fontSize:10,fontFamily:"var(--font-mono)",letterSpacing:"0.1em",textTransform:"uppercase" }}>{label}</p>
       {payload.map((p,i)=>(
         <div key={i} style={{ display:"flex",alignItems:"center",gap:8,margin:"3px 0" }}>
           <div style={{ width:4,height:4,borderRadius:"50%",background:p.color??"var(--gold)",flexShrink:0 }} />
-          <span style={{ color:"var(--text-muted)",fontSize:11,fontFamily:"var(--font-mono)" }}>{p.name}</span>
+          <span style={{ color:"var(--text-muted)",fontSize:12,fontFamily:"var(--font-mono)" }}>{p.name}</span>
           <span style={{ color:"var(--text)",fontWeight:600,fontFamily:"var(--font-mono)",marginLeft:"auto",paddingLeft:12 }}>{p.value}</span>
         </div>
       ))}
@@ -399,7 +399,7 @@ function Modal({ title, onClose, children, width=560, wide=false }: { title:stri
           <>
             <div style={{ padding:"18px 24px 14px",borderBottom:"1px solid var(--border)",flexShrink:0 }}>
               <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10 }}>
-                <p style={{ fontSize:13,fontWeight:500,color:"var(--text)",fontFamily:"var(--font-display)",fontStyle:"italic",letterSpacing:"0.02em" }}>{title}</p>
+                <p style={{ fontSize:14,fontWeight:500,color:"var(--text)",fontFamily:"var(--font-display)",fontStyle:"italic",letterSpacing:"0.02em" }}>{title}</p>
                 <button onClick={onClose} style={{ width:26,height:26,borderRadius:"50%",border:"1px solid var(--border)",background:"transparent",cursor:"pointer",color:"var(--text-muted)",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1 }}>×</button>
               </div>
               <GreekDivider />
@@ -410,7 +410,7 @@ function Modal({ title, onClose, children, width=560, wide=false }: { title:stri
           <>
             <div style={{ marginBottom:20 }}>
               <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12 }}>
-                <p style={{ fontSize:13,fontWeight:500,color:"var(--text)",fontFamily:"var(--font-display)",fontStyle:"italic",letterSpacing:"0.02em" }}>{title}</p>
+                <p style={{ fontSize:14,fontWeight:500,color:"var(--text)",fontFamily:"var(--font-display)",fontStyle:"italic",letterSpacing:"0.02em" }}>{title}</p>
                 <button onClick={onClose} style={{ width:26,height:26,borderRadius:"50%",border:"1px solid var(--border)",background:"transparent",cursor:"pointer",color:"var(--text-muted)",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1 }}>×</button>
               </div>
               <GreekDivider />
@@ -426,7 +426,7 @@ function Modal({ title, onClose, children, width=560, wide=false }: { title:stri
 function Confirm({ message, onConfirm, onCancel }: { message:string; onConfirm:()=>void; onCancel:()=>void }) {
   return (
     <Modal title="Confirm action" onClose={onCancel} width={340}>
-      <p style={{ fontSize:13,color:"var(--text-muted)",lineHeight:1.65,marginBottom:22 }}>{message}</p>
+      <p style={{ fontSize:14,color:"var(--text-muted)",lineHeight:1.65,marginBottom:22 }}>{message}</p>
       <div style={{ display:"flex",gap:10,justifyContent:"flex-end" }}>
         <Btn variant="ghost" onClick={onCancel}>Cancel</Btn>
         <Btn variant="danger" onClick={onConfirm}>Delete</Btn>
@@ -500,7 +500,7 @@ function SectionTitle({ children, sub, right, mono }: { children:React.ReactNode
     <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16 }}>
       <div>
         <p style={{ fontSize:mono?10:12,fontWeight:mono?600:500,color:"var(--text)",marginBottom:sub?3:0,fontFamily:mono?"var(--font-mono)":undefined,letterSpacing:mono?"0.08em":undefined,textTransform:mono?"uppercase":undefined }}>{children}</p>
-        {sub&&<p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",letterSpacing:"0.04em" }}>{sub}</p>}
+        {sub&&<p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",letterSpacing:"0.04em" }}>{sub}</p>}
       </div>
       {right}
     </div>
@@ -511,7 +511,7 @@ function PageHeader({ supra, title, action }: { supra:string; title:string; acti
   return (
     <div className="op-page-header" style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-end",borderBottom:"1px solid var(--border)",paddingBottom:18,marginBottom:22 }}>
       <div>
-        <p style={{ fontSize:9,color:"var(--text-subtle)",letterSpacing:"0.18em",textTransform:"uppercase",marginBottom:5,fontFamily:"var(--font-mono)" }}>{supra}</p>
+        <p style={{ fontSize:11,color:"var(--text-muted)",letterSpacing:"0.18em",textTransform:"uppercase",marginBottom:5,fontFamily:"var(--font-mono)" }}>{supra}</p>
         <h1 style={{ fontSize:26,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)",letterSpacing:"-0.02em" }}>{title}</h1>
       </div>
       {action&&<div>{action}</div>}
@@ -555,14 +555,14 @@ function MetricRow({ items }: { items:Array<{ label:string; value:string; unit?:
           {/* Lab-style accent bar */}
           <div style={{ position:"absolute",top:0,left:0,right:0,height:2,background:`linear-gradient(90deg, ${item.accent}, ${item.accent}80)` }} />
           <div style={{ display:"flex",alignItems:"center",gap:5,marginBottom:10 }}>
-            <p style={{ fontSize:9,color:"var(--text-muted)",letterSpacing:"0.14em",textTransform:"uppercase",fontWeight:600,fontFamily:"var(--font-mono)" }}>{item.label}</p>
+            <p style={{ fontSize:10,color:"var(--text-muted)",letterSpacing:"0.14em",textTransform:"uppercase",fontWeight:600,fontFamily:"var(--font-mono)" }}>{item.label}</p>
             <HintIcon text={item.hint} />
           </div>
           <div style={{ display:"flex",alignItems:"baseline",gap:3 }}>
             <span style={{ fontSize:26,fontWeight:300,fontFamily:"var(--font-display)",color:"var(--text)",letterSpacing:"-0.03em",lineHeight:1 }}>{item.value}</span>
-            {item.unit&&<span style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{item.unit}</span>}
+            {item.unit&&<span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{item.unit}</span>}
           </div>
-          {item.sub&&<p style={{ fontSize:10,color:"var(--text-subtle)",marginTop:5,fontFamily:"var(--font-mono)" }}>{item.sub}</p>}
+          {item.sub&&<p style={{ fontSize:11,color:"var(--text-muted)",marginTop:5,fontFamily:"var(--font-mono)" }}>{item.sub}</p>}
         </div>
       ))}
     </div>
@@ -605,20 +605,20 @@ function GoalEditor({ initial, onSave }: { initial:GoalData|null; onSave:(g:Goal
     <div style={{ display:"flex",flexDirection:"column",gap:14 }}>
       {/* Race name */}
       <div style={{ display:"grid",gridTemplateColumns:"80px 1fr",gap:10,alignItems:"center" }}>
-        <span style={{ fontSize:9,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>Race name</span>
+        <span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>Race name</span>
         <input value={f.name} onChange={e=>s("name")(e.target.value)} placeholder="e.g. Berlin Marathon"
           style={{ padding:"7px 10px",borderRadius:5,border:"1px solid var(--border)",background:"var(--bg)",color:"var(--text)",fontSize:12,fontFamily:"var(--font-mono)",width:"100%",boxSizing:"border-box" }} />
       </div>
 
       {/* Distance presets — grouped by category */}
       <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
-        <span style={{ fontSize:9,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>Distance</span>
+        <span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>Distance</span>
         {(["run","tri","cycle","other"] as const).map(cat=>{
           const catLabel:{[k:string]:string}={run:"Running",tri:"Triathlon",cycle:"Cycling",other:"Other"};
           const items=RACE_PRESETS.filter(p=>p.category===cat);
           return (
             <div key={cat} style={{ display:"flex",alignItems:"center",gap:8 }}>
-              <span style={{ fontSize:9,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",width:56,flexShrink:0 }}>{catLabel[cat]}</span>
+              <span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",width:56,flexShrink:0 }}>{catLabel[cat]}</span>
               <div style={{ display:"flex",gap:4,flexWrap:"wrap" }}>
                 {items.map(p=>(
                   <button key={p.label} onClick={()=>{setPreset(p.label);if(p.distance)s("distance")(p.distance);}}
@@ -632,16 +632,16 @@ function GoalEditor({ initial, onSave }: { initial:GoalData|null; onSave:(g:Goal
         })}
         {preset==="Custom"&&(
           <div style={{ display:"flex",alignItems:"center",gap:8 }}>
-            <span style={{ fontSize:9,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",width:56,flexShrink:0 }}>Distance</span>
+            <span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",width:56,flexShrink:0 }}>Distance</span>
             <input value={f.distance} onChange={e=>s("distance")(e.target.value)} placeholder="e.g. 50 km"
-              style={{ padding:"6px 10px",borderRadius:4,border:"1px solid var(--border)",background:"var(--bg)",color:"var(--text)",fontSize:11,fontFamily:"var(--font-mono)",width:120 }} />
+              style={{ padding:"6px 10px",borderRadius:4,border:"1px solid var(--border)",background:"var(--bg)",color:"var(--text)",fontSize:12,fontFamily:"var(--font-mono)",width:120 }} />
           </div>
         )}
       </div>
 
       {/* Race date */}
       <div style={{ display:"grid",gridTemplateColumns:"80px 1fr auto",gap:10,alignItems:"center" }}>
-        <span style={{ fontSize:9,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>Race date</span>
+        <span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>Race date</span>
         <input type="date" value={f.date} onChange={e=>s("date")(e.target.value)}
           style={{ padding:"7px 10px",borderRadius:5,border:"1px solid var(--border)",background:"var(--bg)",color:"var(--text)",fontSize:12,fontFamily:"var(--font-mono)",colorScheme:"dark" }} />
         {daysLeft!==null&&(
@@ -653,7 +653,7 @@ function GoalEditor({ initial, onSave }: { initial:GoalData|null; onSave:(g:Goal
 
       {/* Target time */}
       <div style={{ display:"grid",gridTemplateColumns:"80px 1fr",gap:10,alignItems:"center" }}>
-        <span style={{ fontSize:9,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>Target time</span>
+        <span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>Target time</span>
         <input value={f.targetTime} onChange={e=>s("targetTime")(e.target.value)} placeholder="e.g. 3:30:00  (optional)"
           style={{ padding:"7px 10px",borderRadius:5,border:"1px solid var(--border)",background:"var(--bg)",color:"var(--text)",fontSize:12,fontFamily:"var(--font-mono)",width:"100%",boxSizing:"border-box" }} />
       </div>
@@ -706,7 +706,7 @@ function ActivityFormModal({ initial, onSave, onClose, saving }: { initial?:AF; 
             <input type="range" min={1} max={10} value={feelNum} onChange={e=>s("feel")(e.target.value)} style={{ flex:1 }} />
             <div style={{ display:"flex",alignItems:"baseline",gap:2,minWidth:32 }}>
               <span style={{ fontSize:22,fontWeight:300,fontFamily:"var(--font-display)",color:feelColor,lineHeight:1 }}>{f.feel}</span>
-              <span style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)" }}>/10</span>
+              <span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>/10</span>
             </div>
           </div>
         </Field>
@@ -739,14 +739,14 @@ function ActivityRow({ act, border, onEdit, onDelete, onClick, compact }: { act:
         <p style={{ fontSize:12,fontWeight:500,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{act.title}</p>
         <p style={{ fontSize:10,color:"var(--text-muted)",marginTop:1,fontFamily:"var(--font-mono)" }}>{formatRelDate(act.date)} · {act.type??act.sport}</p>
       </div>
-      {!compact&&<span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{fmtDuration(act.duration_seconds)}</span>}
-      {!compact&&<span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{fmtDist(act.distance_meters,act.sport)}</span>}
-      {!compact&&<span className="op-col-elev" style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{act.elevation_gain?`↑${act.elevation_gain}m`:"—"}</span>}
+      {!compact&&<span style={{ fontSize:12,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{fmtDuration(act.duration_seconds)}</span>}
+      {!compact&&<span style={{ fontSize:12,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{fmtDist(act.distance_meters,act.sport)}</span>}
+      {!compact&&<span className="op-col-elev" style={{ fontSize:12,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{act.elevation_gain?`↑${act.elevation_gain}m`:"—"}</span>}
       <div style={{ display:"flex",alignItems:"baseline",gap:2 }}>
         <span style={{ fontSize:12,fontWeight:600,color:tssColor(act.tss??0),fontFamily:"var(--font-mono)" }}>{act.tss??"-"}</span>
-        <span style={{ fontSize:9,color:"var(--text-subtle)",fontFamily:"var(--font-mono)" }}>TSS</span>
+        <span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>TSS</span>
       </div>
-      <span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{act.feel_score?`★${act.feel_score}`:"—"}</span>
+      <span style={{ fontSize:12,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{act.feel_score?`★${act.feel_score}`:"—"}</span>
       {!compact&&(
         <div style={{ display:"flex",gap:4,opacity:hover&&(onEdit||onDelete)?1:0,transition:"opacity 0.15s" }}>
           {onEdit&&<button onClick={e=>{e.stopPropagation();onEdit(act);}} style={{ width:22,height:22,borderRadius:4,border:"1px solid var(--border)",background:"transparent",color:"var(--text-muted)",fontSize:10,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center" }}>✎</button>}
@@ -779,7 +779,7 @@ function CalendarView({ activities, onSelect }: { activities:Activity[]; onSelec
         </div>
       </div>
       <div style={{ display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2 }}>
-        {["Mo","Tu","We","Th","Fr","Sa","Su"].map(d=><p key={d} style={{ fontSize:9,color:"var(--text-subtle)",textAlign:"center",padding:"3px 0",fontFamily:"var(--font-mono)",letterSpacing:"0.06em" }}>{d}</p>)}
+        {["Mo","Tu","We","Th","Fr","Sa","Su"].map(d=><p key={d} style={{ fontSize:11,color:"var(--text-muted)",textAlign:"center",padding:"3px 0",fontFamily:"var(--font-mono)",letterSpacing:"0.06em" }}>{d}</p>)}
         {cells.map((day,i)=>{
           if(!day) return <div key={i} />;
           const ds=`${mo.y}-${String(mo.m+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
@@ -832,10 +832,10 @@ function WellnessModal({ date, existing, onSave, onClose, saving }: { date:strin
             <div key={key}>
               <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8 }}>
                 <div style={{ display:"flex",alignItems:"center",gap:5 }}>
-                  <label style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)",letterSpacing:"0.06em",textTransform:"uppercase" }}>{label}</label>
+                  <label style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",letterSpacing:"0.06em",textTransform:"uppercase" }}>{label}</label>
                   <HintIcon text={hint} />
                 </div>
-                <span style={{ fontSize:14,fontWeight:300,color:col,fontFamily:"var(--font-display)" }}>{f[key]}<span style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",marginLeft:1 }}>{unit}</span></span>
+                <span style={{ fontSize:14,fontWeight:300,color:col,fontFamily:"var(--font-display)" }}>{f[key]}<span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",marginLeft:1 }}>{unit}</span></span>
               </div>
               <input type="range" min={min} max={max} step={step} value={val} onChange={e=>s(key)(e.target.value)} style={{ width:"100%",accentColor:col }} />
             </div>
@@ -859,21 +859,21 @@ function StatCell({ label, value, unit, color, hint, large }: { label:string; va
   if (!value && value !== 0) return (
     <div>
       <div style={{ display:"flex",alignItems:"center",gap:4,marginBottom:5 }}>
-        <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"var(--font-mono)" }}>{label}</p>
+        <p style={{ fontSize:10,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.09em",fontFamily:"var(--font-mono)" }}>{label}</p>
         {hint&&<HintIcon text={hint} />}
       </div>
-      <p style={{ fontSize:13,color:"var(--text-subtle)",fontFamily:"var(--font-mono)" }}>—</p>
+      <p style={{ fontSize:15,color:"var(--text-subtle)",fontFamily:"var(--font-mono)" }}>—</p>
     </div>
   );
   return (
     <div>
       <div style={{ display:"flex",alignItems:"center",gap:4,marginBottom:5 }}>
-        <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"var(--font-mono)" }}>{label}</p>
+        <p style={{ fontSize:10,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.09em",fontFamily:"var(--font-mono)" }}>{label}</p>
         {hint&&<HintIcon text={hint} />}
       </div>
       <div style={{ display:"flex",alignItems:"baseline",gap:2 }}>
-        <span style={{ fontSize:large?20:13,fontWeight:large?300:500,fontFamily:large?"var(--font-display)":"var(--font-mono)",color:color??"var(--text)",letterSpacing:large?"-0.02em":"0",lineHeight:1 }}>{value}</span>
-        {unit&&<span style={{ fontSize:9,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",marginLeft:1 }}>{unit}</span>}
+        <span style={{ fontSize:large?22:15,fontWeight:large?300:500,fontFamily:large?"var(--font-display)":"var(--font-mono)",color:color??"var(--text)",letterSpacing:large?"-0.02em":"0",lineHeight:1 }}>{value}</span>
+        {unit&&<span style={{ fontSize:12,color:"var(--text-muted)",fontFamily:"var(--font-mono)",marginLeft:2 }}>{unit}</span>}
       </div>
     </div>
   );
@@ -882,25 +882,37 @@ function StatCell({ label, value, unit, color, hint, large }: { label:string; va
 function SplitsChart({ splits, sport }: { splits: Array<{distance:number;moving_time:number;average_speed:number;average_heartrate?:number;split:number;pace_zone?:number}>; sport:string }) {
   const data = splits.map(s => {
     const paceSecKm = s.average_speed > 0 ? Math.round(1000 / s.average_speed) : null;
+    const speedKph  = s.average_speed > 0 ? parseFloat((s.average_speed * 3.6).toFixed(1)) : null;
     return {
       km: `${s.split}`,
       pace: paceSecKm ? parseFloat((paceSecKm/60).toFixed(2)) : null,
+      speed: speedKph,
       hr: s.average_heartrate ? Math.round(s.average_heartrate) : null,
     };
   });
   const isCycling = sport === "cycling";
+  const vals = data.map(d => isCycling ? d.speed : d.pace).filter((v): v is number => v != null);
+  const minV = vals.length ? Math.min(...vals) : 0;
+  const maxV = vals.length ? Math.max(...vals) : 10;
+  const pad  = (maxV - minV) * 0.15 || 0.5;
+  // For running: reversed axis (lower pace = faster = bar from top). Domain tight around data.
+  const domain: [number,number] = isCycling
+    ? [Math.max(0, minV - pad), maxV + pad]
+    : [minV - pad, maxV + pad];
+  const dataKey = isCycling ? "speed" : "pace";
+  const label   = isCycling ? "Speed" : "Pace";
   return (
     <div>
-      <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"var(--font-mono)",marginBottom:10 }}>
-        {isCycling ? "Speed by km" : "Pace by km"} · splits
+      <p style={{ fontSize:11,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"var(--font-mono)",marginBottom:10 }}>
+        {isCycling ? "Speed by km · km/h" : "Pace by km · min/km"} · splits
       </p>
-      <ResponsiveContainer width="100%" height={120}>
-        <BarChart data={data} barSize={Math.max(8,Math.min(22,Math.floor(300/data.length)))} margin={{top:6,right:4,bottom:0,left:-24}} barCategoryGap="20%">
+      <ResponsiveContainer width="100%" height={130}>
+        <BarChart data={data} barSize={Math.max(8,Math.min(24,Math.floor(300/data.length)))} margin={{top:6,right:4,bottom:0,left:-20}} barCategoryGap="25%">
           <CartesianGrid strokeDasharray="2 6" stroke="var(--border)" vertical={false} />
-          <XAxis dataKey="km" tick={{fill:"var(--text-subtle)",fontSize:8,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} interval={data.length>20?2:0} />
-          <YAxis tick={{fill:"var(--text-subtle)",fontSize:8,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} reversed={!isCycling} />
-          <Tooltip content={<OTooltip />} cursor={{fill:"var(--border)",opacity:0.3,radius:2}} />
-          <Bar dataKey="pace" name={isCycling?"Speed":"Pace"} radius={[3,3,0,0]} fill="var(--gold)" opacity={0.85} />
+          <XAxis dataKey="km" tick={{fill:"var(--text-subtle)",fontSize:10,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} interval={data.length>20?2:0} />
+          <YAxis tick={{fill:"var(--text-subtle)",fontSize:10,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} domain={domain} reversed={!isCycling} width={32} />
+          <Tooltip content={<OTooltip />} cursor={{fill:"var(--border)",opacity:0.3}} />
+          <Bar dataKey={dataKey} name={label} radius={[3,3,0,0]} fill="var(--gold)" opacity={0.9} />
         </BarChart>
       </ResponsiveContainer>
       {data.some(d=>d.hr) && (
@@ -912,7 +924,7 @@ function SplitsChart({ splits, sport }: { splits: Array<{distance:number;moving_
                 <stop offset="100%" stopColor="var(--terra)" stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <YAxis tick={{fill:"var(--text-subtle)",fontSize:8,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} domain={["auto","auto"]} width={28} />
+            <YAxis tick={{fill:"var(--text-subtle)",fontSize:10,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} domain={["auto","auto"]} width={28} />
             <Tooltip content={<OTooltip />} cursor={{stroke:"var(--border-hi)",strokeWidth:1,strokeDasharray:"2 2"}} />
             <Area type="monotone" dataKey="hr" name="HR" stroke="var(--terra)" fill="url(#hrg)" strokeWidth={1.5} dot={false} />
           </AreaChart>
@@ -1047,13 +1059,13 @@ function ActivityDetailModal({ act, profile, onClose, onEdit, onDelete }: { act:
           {isStrava&&<Badge color="var(--terra)">Strava</Badge>}
           {act.pr_count&&act.pr_count>0&&<Badge color="var(--gold)">🏆 {act.pr_count} PR{act.pr_count>1?"s":""}</Badge>}
           {act.achievement_count&&act.achievement_count>0&&<Badge color="var(--olive)">★ {act.achievement_count}</Badge>}
-          <span style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{act.date}</span>
+          <span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{act.date}</span>
         </div>
       </div>
       {act.kudos_count&&act.kudos_count>0?(
         <div style={{ textAlign:"center",flexShrink:0 }}>
           <p style={{ fontSize:18,fontWeight:300,color:"var(--terra)",fontFamily:"var(--font-display)" }}>{act.kudos_count}</p>
-          <p style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.1em" }}>kudos</p>
+          <p style={{ fontSize:9,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>kudos</p>
         </div>
       ):null}
     </div>
@@ -1068,8 +1080,8 @@ function ActivityDetailModal({ act, profile, onClose, onEdit, onDelete }: { act:
         { label:"Elevation",value:act.elevation_gain?`↑${act.elevation_gain}m`:null, color:"var(--text)" },
       ].map((m,i)=>(
         <div key={i} style={{ background:"var(--surface-hi)",padding:"12px 14px" }}>
-          <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"var(--font-mono)",marginBottom:6 }}>{m.label}</p>
-          <p style={{ fontSize:18,fontWeight:300,fontFamily:"var(--font-display)",color:m.color,lineHeight:1,letterSpacing:"-0.02em" }}>{m.value??"—"}</p>
+          <p style={{ fontSize:10,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:"var(--font-mono)",marginBottom:7 }}>{m.label}</p>
+          <p style={{ fontSize:20,fontWeight:300,fontFamily:"var(--font-display)",color:m.color,lineHeight:1,letterSpacing:"-0.02em" }}>{m.value??"—"}</p>
         </div>
       ))}
     </div>
@@ -1127,7 +1139,7 @@ function ActivityDetailModal({ act, profile, onClose, onEdit, onDelete }: { act:
       <Btn variant="danger" onClick={()=>{onClose();onDelete(act.id);}}>Delete</Btn>
       {isStrava&&act.strava_id&&(
         <a href={`https://www.strava.com/activities/${act.strava_id}`} target="_blank" rel="noopener noreferrer"
-          style={{ fontSize:11,color:"var(--terra)",fontFamily:"var(--font-mono)",textDecoration:"none",border:"1px solid var(--terra)30",borderRadius:6,padding:"9px 16px",display:"flex",alignItems:"center" }}>
+          style={{ fontSize:12,color:"var(--terra)",fontFamily:"var(--font-mono)",textDecoration:"none",border:"1px solid var(--terra)30",borderRadius:6,padding:"9px 16px",display:"flex",alignItems:"center" }}>
           Strava →
         </a>
       )}
@@ -1211,7 +1223,7 @@ function ActivityDetailModal({ act, profile, onClose, onEdit, onDelete }: { act:
           ):(isRunning||isCycling)&&(
             <div style={{ display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center",gap:6,padding:"24px 0",opacity:0.45 }}>
               <p style={{ fontSize:52,fontWeight:300,fontFamily:"var(--font-display)",color:"var(--olive)",letterSpacing:"-0.03em",lineHeight:1 }}>{isRunning?paceStr:(avgSpeedKmh?`${avgSpeedKmh}`:null)??"—"}</p>
-              <p style={{ fontSize:9,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.1em" }}>{isRunning?"avg pace / km":"avg speed km/h"}</p>
+              <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.1em" }}>{isRunning?"avg pace / km":"avg speed km/h"}</p>
             </div>
           )}
 
@@ -1220,7 +1232,7 @@ function ActivityDetailModal({ act, profile, onClose, onEdit, onDelete }: { act:
             <div style={{ background:"var(--surface)",borderRadius:6,padding:"12px 14px",border:"1px solid var(--border)" }}>
               <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8 }}>
                 <div style={{ display:"flex",alignItems:"center",gap:6 }}>
-                  <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"var(--font-mono)" }}>Aerobic decoupling</p>
+                  <p style={{ fontSize:11,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"var(--font-mono)" }}>Aerobic decoupling</p>
                   <HintIcon text="How much aerobic efficiency drops from first half to second half. < 5% = excellent aerobic base. > 10% = significant cardiac drift." />
                 </div>
                 <span style={{ fontSize:14,fontWeight:300,fontFamily:"var(--font-display)",color:decoupling<5?"var(--olive)":decoupling<10?"var(--gold)":"var(--terra)" }}>{decoupling.toFixed(1)}%</span>
@@ -1237,7 +1249,7 @@ function ActivityDetailModal({ act, profile, onClose, onEdit, onDelete }: { act:
 
           {act.notes&&(
             <div style={{ background:"var(--bg)",borderRadius:6,padding:"12px 14px",borderLeft:"2px solid var(--border-hi)" }}>
-              <p style={{ fontSize:11,color:"var(--text-2)",lineHeight:1.7,fontFamily:"var(--font-display)",fontStyle:"italic" }}>&ldquo;{act.notes}&rdquo;</p>
+              <p style={{ fontSize:12,color:"var(--text-2)",lineHeight:1.7,fontFamily:"var(--font-display)",fontStyle:"italic" }}>&ldquo;{act.notes}&rdquo;</p>
             </div>
           )}
           <Actions />
@@ -1375,15 +1387,15 @@ function ActivityDetailModal({ act, profile, onClose, onEdit, onDelete }: { act:
                 {/* AI per-activity analysis */}
                 <div style={{ background:"var(--surface)",borderRadius:8,padding:"14px",border:"1px solid var(--border)" }}>
                   <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10 }}>
-                    <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"var(--font-mono)" }}>AI analysis · this session</p>
-                    <button onClick={fetchAI} disabled={aiLoading} style={{ fontSize:9,fontFamily:"var(--font-mono)",color:"var(--gold)",background:"none",border:"1px solid var(--gold)40",borderRadius:4,padding:"4px 10px",cursor:aiLoading?"not-allowed":"pointer",opacity:aiLoading?0.6:1 }}>
+                    <p style={{ fontSize:11,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"var(--font-mono)" }}>AI analysis · this session</p>
+                    <button onClick={fetchAI} disabled={aiLoading} style={{ fontSize:10,fontFamily:"var(--font-mono)",color:"var(--gold)",background:"none",border:"1px solid var(--gold)40",borderRadius:4,padding:"4px 10px",cursor:aiLoading?"not-allowed":"pointer",opacity:aiLoading?0.6:1 }}>
                       {aiLoading?"Analysing…":"Analyse →"}
                     </button>
                   </div>
                   {aiAnalysis?(
                     <div><Markdown text={aiAnalysis} size={11} /></div>
                   ):(
-                    <p style={{ fontSize:11,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",fontStyle:"italic" }}>
+                    <p style={{ fontSize:12,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",fontStyle:"italic" }}>
                       Get AI-powered insights specific to this session — pacing strategy, recovery needs, training adaptation signals.
                     </p>
                   )}
@@ -1408,14 +1420,14 @@ function ActivityDetailModal({ act, profile, onClose, onEdit, onDelete }: { act:
                       {hrZones.map(z=>(
                         <div key={z.name}>
                           <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4 }}>
-                            <span style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{z.name}</span>
+                            <span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{z.name}</span>
                             <span style={{ fontSize:10,color:z.color,fontFamily:"var(--font-mono)",fontWeight:600 }}>{z.pct}%</span>
                           </div>
                           <div style={{ height:6,background:"var(--border)",borderRadius:4,overflow:"hidden" }}>
                             <div style={{ height:"100%",width:`${z.pct}%`,background:z.color,borderRadius:4,opacity:0.8,transition:"width 0.6s ease" }} />
                           </div>
                           <div style={{ display:"flex",justifyContent:"space-between",marginTop:2 }}>
-                            <span style={{ fontSize:7,color:"var(--text-subtle)",fontFamily:"var(--font-mono)" }}>{lthr?`${Math.round(lthr*z.lo)}–${Math.round(lthr*z.hi)} bpm`:""}</span>
+                            <span style={{ fontSize:9,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{lthr?`${Math.round(lthr*z.lo)}–${Math.round(lthr*z.hi)} bpm`:""}</span>
                           </div>
                         </div>
                       ))}
@@ -1423,7 +1435,7 @@ function ActivityDetailModal({ act, profile, onClose, onEdit, onDelete }: { act:
 
                     {/* Time in zone summary */}
                     <div style={{ marginTop:14,padding:"10px 12px",background:"var(--surface)",borderRadius:6 }}>
-                      <p style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6 }}>Session character</p>
+                      <p style={{ fontSize:9,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6 }}>Session character</p>
                       {(()=>{
                         const z2 = hrZones.find(z=>z.name.includes("Z2"))?.pct??0;
                         const z4z5 = (hrZones.find(z=>z.name.includes("Z4"))?.pct??0)+(hrZones.find(z=>z.name.includes("Z5"))?.pct??0);
@@ -1441,7 +1453,7 @@ function ActivityDetailModal({ act, profile, onClose, onEdit, onDelete }: { act:
                 ):(
                   <div style={{ textAlign:"center",padding:"24px 0",opacity:0.5 }}>
                     <p style={{ fontSize:12,color:"var(--text-muted)",fontFamily:"var(--font-mono)",marginBottom:6 }}>No zone data available</p>
-                    <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)" }}>
+                    <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>
                       {!lthr?"Set your LTHR in Profile to see HR zone distribution.":"This activity has no per-km HR splits from Strava."}
                     </p>
                   </div>
@@ -1459,13 +1471,13 @@ function ActivityDetailModal({ act, profile, onClose, onEdit, onDelete }: { act:
                       return (
                         <div style={{ background:"var(--surface)",borderRadius:6,padding:"12px 14px" }}>
                           <div style={{ display:"flex",justifyContent:"space-between",marginBottom:8 }}>
-                            <span style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>Pace variability (CV)</span>
+                            <span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>Pace variability (CV)</span>
                             <span style={{ fontSize:12,fontFamily:"var(--font-mono)",color:cv<3?"var(--olive)":cv<6?"var(--gold)":"var(--terra)",fontWeight:600 }}>{cv}%</span>
                           </div>
                           <div style={{ height:4,background:"var(--border)",borderRadius:3,overflow:"hidden" }}>
                             <div style={{ height:"100%",width:`${Math.min(cv*8,100)}%`,background:cv<3?"var(--olive)":cv<6?"var(--gold)":"var(--terra)",borderRadius:3 }} />
                           </div>
-                          <p style={{ fontSize:9,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",marginTop:6 }}>
+                          <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",marginTop:6 }}>
                             {cv<3?"Very consistent pacing":cv<6?"Good pacing control":cv<10?"Moderate variability — check course profile":"High variability — hills, wind or pacing issues"}
                           </p>
                         </div>
@@ -1489,11 +1501,12 @@ function ActivityDetailModal({ act, profile, onClose, onEdit, onDelete }: { act:
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
 
 function DashboardPage({ profile, activities, metrics, goal, onGoalChange, onNavigate, onLogWellness }: { profile:Profile|null; activities:Activity[]; metrics:DailyMetrics|null; goal:{name:string;date:string;distance:string;targetTime:string}|null; onGoalChange:(g:{name:string;date:string;distance:string;targetTime:string}|null)=>void; onNavigate:(p:PageId)=>void; onLogWellness:()=>void }) {
-  const tm=calcTM(activities);
-  const weekActs=activities.filter(a=>new Date(a.date)>=new Date(Date.now()-7*86400000));
-  const weekTSS=weekActs.reduce((s,a)=>s+(a.tss??0),0);
-  const fitness=buildFitnessChart(activities);
-  const bar=buildWeekBar(activities);
+  const mob=useIsMobile();
+  const tm=useMemo(()=>calcTM(activities),[activities]);
+  const weekActs=useMemo(()=>activities.filter(a=>new Date(a.date)>=new Date(Date.now()-7*86400000)),[activities]);
+  const weekTSS=useMemo(()=>weekActs.reduce((s,a)=>s+(a.tss??0),0),[weekActs]);
+  const fitness=useMemo(()=>buildFitnessChart(activities),[activities]);
+  const bar=useMemo(()=>buildWeekBar(activities),[activities]);
   const [viewMode,setViewMode]=useState<"chart"|"calendar">("chart");
   const [calSel,setCalSel]=useState<Activity|null>(null);
   const [detail,setDetail]=useState<Activity|null>(null);
@@ -1560,22 +1573,22 @@ function DashboardPage({ profile, activities, metrics, goal, onGoalChange, onNav
         <div style={{ display:"flex",alignItems:"center",gap:12,padding:"10px 16px",background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,borderLeft:`2px solid ${rcColor}` }}>
           <div style={{ display:"flex",alignItems:"baseline",gap:3 }}>
             <span style={{ fontSize:20,fontWeight:300,color:rcColor,fontFamily:"var(--font-display)" }}>{rc}</span>
-            <span style={{ fontSize:9,color:"var(--text-subtle)",fontFamily:"var(--font-mono)" }}>/100</span>
+            <span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>/100</span>
           </div>
           <div style={{ height:1,flex:1,background:"var(--border)",position:"relative" }}>
             <div style={{ position:"absolute",left:0,top:0,height:"100%",width:`${rc}%`,background:rcColor,transition:"width 0.5s cubic-bezier(0.16,1,0.3,1)" }} />
           </div>
-          <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",whiteSpace:"nowrap" }}>
-            {getAutoInsight(metrics!)} <button onClick={onLogWellness} style={{ color:"var(--text-subtle)",background:"none",border:"none",cursor:"pointer",fontSize:11,fontFamily:"var(--font-mono)",textDecoration:"underline",padding:0 }}>edit</button>
+          <p style={{ fontSize:12,color:"var(--text-muted)",fontFamily:"var(--font-mono)",whiteSpace:"nowrap" }}>
+            {getAutoInsight(metrics!)} <button onClick={onLogWellness} style={{ color:"var(--text-subtle)",background:"none",border:"none",cursor:"pointer",fontSize:12,fontFamily:"var(--font-mono)",textDecoration:"underline",padding:0 }}>edit</button>
           </p>
         </div>
       )}
       {!metrics&&(
         <div style={{ display:"flex",alignItems:"center",gap:12,padding:"10px 16px",background:"var(--gold-dim)",border:"1px solid var(--gold)25",borderRadius:8 }}>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="var(--gold)" strokeWidth="1"><circle cx="7" cy="7" r="6"/><line x1="7" y1="4" x2="7" y2="8"/><circle cx="7" cy="10.5" r="0.8" fill="var(--gold)" stroke="none"/></svg>
-          <p style={{ fontSize:11,color:"var(--gold)",fontFamily:"var(--font-mono)" }}>
+          <p style={{ fontSize:12,color:"var(--gold)",fontFamily:"var(--font-mono)" }}>
             Log your morning wellness for personalised training recommendations.{" "}
-            <button onClick={onLogWellness} style={{ color:"var(--gold)",background:"none",border:"none",cursor:"pointer",fontSize:11,fontFamily:"var(--font-mono)",textDecoration:"underline",padding:0 }}>Log now →</button>
+            <button onClick={onLogWellness} style={{ color:"var(--gold)",background:"none",border:"none",cursor:"pointer",fontSize:12,fontFamily:"var(--font-mono)",textDecoration:"underline",padding:0 }}>Log now →</button>
           </p>
         </div>
       )}
@@ -1607,35 +1620,35 @@ function DashboardPage({ profile, activities, metrics, goal, onGoalChange, onNav
         <div style={{ display:"grid",gridTemplateColumns:"1fr auto auto",gap:1,background:"var(--border)",borderRadius:8,overflow:"hidden" }}>
           <div style={{ background:"var(--surface)",padding:"12px 18px",display:"flex",gap:18,alignItems:"center",flexWrap:"wrap" }}>
             <div>
-              <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:3 }}>Goal race</p>
+              <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:3 }}>Goal race</p>
               <p style={{ fontSize:16,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)",lineHeight:1 }}>{goal.name}</p>
-              <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",marginTop:3 }}>{goal.distance}{goal.targetTime?` · target ${goal.targetTime}`:""}</p>
+              <p style={{ fontSize:12,color:"var(--text-muted)",fontFamily:"var(--font-mono)",marginTop:3 }}>{goal.distance}{goal.targetTime?` · target ${goal.targetTime}`:""}</p>
             </div>
             {goalDaysLeft!==null&&(
               <div style={{ textAlign:"center",paddingLeft:18,borderLeft:"1px solid var(--border)" }}>
-                <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:3 }}>Countdown</p>
+                <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:3 }}>Countdown</p>
                 <p style={{ fontSize:26,fontWeight:300,fontFamily:"var(--font-display)",color:goalDaysLeft<14?"var(--terra)":goalDaysLeft<42?"var(--gold)":"var(--olive)",lineHeight:1 }}>{goalDaysLeft<0?"past":goalDaysLeft}</p>
-                <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)" }}>{goalDaysLeft<0?"days ago":"days"}</p>
+                <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{goalDaysLeft<0?"days ago":"days"}</p>
               </div>
             )}
             {goalFitnessPct!==null&&(
               <div style={{ flex:1,minWidth:120 }}>
                 <div style={{ display:"flex",justifyContent:"space-between",marginBottom:5 }}>
-                  <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>Fitness readiness</p>
+                  <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>Fitness readiness</p>
                   <p style={{ fontSize:10,color:"var(--gold)",fontFamily:"var(--font-mono)",fontWeight:600 }}>{goalFitnessPct}%</p>
                 </div>
                 <div style={{ height:4,background:"var(--border)",borderRadius:3,overflow:"hidden" }}>
                   <div style={{ height:"100%",width:`${goalFitnessPct}%`,background:`linear-gradient(90deg,var(--terra),var(--gold) 60%,var(--olive))`,borderRadius:3,transition:"width 0.6s ease" }} />
                 </div>
-                <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",marginTop:4 }}>CTL {tm.ctl} pts · {goalFitnessPct<50?"Build base":goalFitnessPct<80?"On track ✓":"Peak ready ✓"}</p>
+                <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",marginTop:4 }}>CTL {tm.ctl} pts · {goalFitnessPct<50?"Build base":goalFitnessPct<80?"On track ✓":"Peak ready ✓"}</p>
               </div>
             )}
           </div>
           <div style={{ background:"var(--surface)",padding:"12px 14px",display:"flex",alignItems:"center",borderLeft:"1px solid var(--border)" }}>
-            <button onClick={()=>setShowGoalEditor(true)} style={{ fontSize:11,color:"var(--text-subtle)",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--font-mono)",letterSpacing:"0.06em",textTransform:"uppercase" }}>Edit</button>
+            <button onClick={()=>setShowGoalEditor(true)} style={{ fontSize:12,color:"var(--text-subtle)",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--font-mono)",letterSpacing:"0.06em",textTransform:"uppercase" }}>Edit</button>
           </div>
           <div style={{ background:"var(--surface)",padding:"12px 14px",display:"flex",alignItems:"center",borderLeft:"1px solid var(--border)" }}>
-            <button onClick={()=>onGoalChange(null)} style={{ fontSize:11,color:"var(--terra)",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--font-mono)",letterSpacing:"0.06em",textTransform:"uppercase" }}>Clear</button>
+            <button onClick={()=>onGoalChange(null)} style={{ fontSize:12,color:"var(--terra)",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--font-mono)",letterSpacing:"0.06em",textTransform:"uppercase" }}>Clear</button>
           </div>
         </div>
       )}
@@ -1648,7 +1661,7 @@ function DashboardPage({ profile, activities, metrics, goal, onGoalChange, onNav
       {showGoalEditor&&(
         <Card p={16}>
           <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14 }}>
-            <p style={{ fontSize:11,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"var(--font-mono)" }}>Goal race</p>
+            <p style={{ fontSize:12,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"var(--font-mono)" }}>Goal race</p>
             <button onClick={()=>setShowGoalEditor(false)} style={{ width:22,height:22,borderRadius:4,border:"1px solid var(--border)",background:"transparent",cursor:"pointer",color:"var(--text-muted)",fontSize:15,display:"flex",alignItems:"center",justifyContent:"center" }}>×</button>
           </div>
           <GoalEditor initial={goal} onSave={g=>{onGoalChange(g);setShowGoalEditor(false);}} />
@@ -1679,21 +1692,21 @@ function DashboardPage({ profile, activities, metrics, goal, onGoalChange, onNav
                   {[["var(--gold)","Fitness"],["var(--terra)","Fatigue"],["var(--olive)","Form"]].map(([c,l])=>(
                     <div key={l} style={{ display:"flex",alignItems:"center",gap:4 }}>
                       <div style={{ width:12,height:1,background:c }} />
-                      <span style={{ fontSize:9,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{l}</span>
+                      <span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{l}</span>
                     </div>
                   ))}
                 </div>
               }>Fitness · Fatigue · Form</SectionTitle>
               {fitness.length>1?(
-                <ResponsiveContainer width="100%" height={190} className="op-chart-tall">
+                <ResponsiveContainer width="100%" height={mob?140:190} className="op-chart-tall">
                   <LineChart data={fitness} margin={{top:8,right:4,bottom:0,left:-18}}>
                     <defs>
                       <linearGradient id="ctlg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--gold)" stopOpacity={0.12}/><stop offset="100%" stopColor="var(--gold)" stopOpacity={0}/></linearGradient>
                       <linearGradient id="tsbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--olive)" stopOpacity={0.1}/><stop offset="100%" stopColor="var(--olive)" stopOpacity={0}/></linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="2 8" stroke="var(--border)" vertical={false} />
-                    <XAxis dataKey="week" tick={{fill:"var(--text-subtle)",fontSize:9,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} />
-                    <YAxis tick={{fill:"var(--text-subtle)",fontSize:9,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} />
+                    <XAxis dataKey="week" tick={{fill:"var(--text-subtle)",fontSize:10,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} />
+                    <YAxis tick={{fill:"var(--text-subtle)",fontSize:10,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} />
                     <ReferenceLine y={0} stroke="var(--border-hi)" strokeDasharray="3 4" strokeWidth={1} />
                     <Tooltip content={<OTooltip />} cursor={{stroke:"var(--border-hi)",strokeWidth:1,strokeDasharray:"3 3"}} />
                     <Line type="monotone" dataKey="ctl" stroke="var(--gold)" strokeWidth={2} dot={false} name="Fitness" />
@@ -1706,11 +1719,11 @@ function DashboardPage({ profile, activities, metrics, goal, onGoalChange, onNav
             <Card p={20}>
               <SectionTitle mono sub="Daily load (TSS)">This week</SectionTitle>
               {bar.some(d=>d.tss>0)?(
-                <ResponsiveContainer width="100%" height={190} className="op-chart-tall">
+                <ResponsiveContainer width="100%" height={mob?140:190} className="op-chart-tall">
                   <BarChart data={bar} barSize={28} margin={{top:8,right:4,bottom:0,left:-18}} barCategoryGap="30%">
                     <CartesianGrid strokeDasharray="2 6" stroke="var(--border)" vertical={false} />
-                    <XAxis dataKey="day" tick={{fill:"var(--text-subtle)",fontSize:9,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} />
-                    <YAxis tick={{fill:"var(--text-subtle)",fontSize:9,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} />
+                    <XAxis dataKey="day" tick={{fill:"var(--text-subtle)",fontSize:10,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} />
+                    <YAxis tick={{fill:"var(--text-subtle)",fontSize:10,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} domain={[0,"auto"]} />
                     <Tooltip content={<OTooltip />} cursor={{fill:"var(--border)",opacity:0.4,radius:3}} />
                     <Bar dataKey="tss" name="TSS" radius={[4,4,0,0]} fill="var(--gold)" opacity={0.85} />
                   </BarChart>
@@ -1758,11 +1771,11 @@ function SportBreakdown({ activities }: { activities:Activity[] }) {
       {counts.map(x=>(
         <div key={x.sport}>
           <div style={{ display:"flex",justifyContent:"space-between",marginBottom:5 }}>
-            <span style={{ fontSize:11,color:"var(--text)",display:"flex",alignItems:"center",gap:7 }}>
+            <span style={{ fontSize:12,color:"var(--text)",display:"flex",alignItems:"center",gap:7 }}>
               <SportIcon sport={x.sport} color={sportColor(x.sport)} size={11} />
               <span style={{ textTransform:"capitalize",fontFamily:"var(--font-mono)",fontSize:10 }}>{x.sport}</span>
             </span>
-            <span style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{x.n}x · {x.tss}TSS</span>
+            <span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{x.n}x · {x.tss}TSS</span>
           </div>
           <div style={{ height:2,background:"var(--border)",borderRadius:1 }}>
             <div style={{ width:`${(x.n/total)*100}%`,height:"100%",background:sportColor(x.sport),borderRadius:1,opacity:0.75,transition:"width 0.5s" }} />
@@ -1776,6 +1789,7 @@ function SportBreakdown({ activities }: { activities:Activity[] }) {
 // ─── AI COACH ────────────────────────────────────────────────────────────────
 
 function CoachPage({ activities, metrics, wellnessHistory, onLogWellness }: { activities:Activity[]; metrics:DailyMetrics|null; wellnessHistory:DailyMetrics[]; onLogWellness:()=>void }) {
+  const mob=useIsMobile();
   const [loading,setLoading]=useState(false);
   const [rec,setRec]=useState<string|null>(null);
   const [extra,setExtra]=useState("");
@@ -1811,7 +1825,7 @@ function CoachPage({ activities, metrics, wellnessHistory, onLogWellness }: { ac
 
   const statLine=(label:string,value:string|null,good:boolean|null)=>(
     <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 0",borderBottom:"1px solid var(--border)" }}>
-      <span style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.06em" }}>{label}</span>
+      <span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.06em" }}>{label}</span>
       <span style={{ fontSize:14,fontWeight:300,fontFamily:"var(--font-display)",color:good===null?"var(--text)":good?"var(--olive)":"var(--terra)" }}>{value??"-"}</span>
     </div>
   );
@@ -1825,7 +1839,7 @@ function CoachPage({ activities, metrics, wellnessHistory, onLogWellness }: { ac
         {/* Score */}
         <div style={{ background:"var(--surface)",padding:"14px 20px",display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center",minWidth:80 }}>
           <div style={{ display:"flex",alignItems:"center",gap:4,marginBottom:4 }}>
-            <span style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.1em" }}>Recovery</span>
+            <span style={{ fontSize:9,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>Recovery</span>
             <HintIcon text="40% sleep · 30% HRV · 20% fatigue · 10% motivation" />
           </div>
           <span style={{ fontSize:32,fontWeight:300,color:rcColor,fontFamily:"var(--font-display)",letterSpacing:"-0.04em",lineHeight:1 }}>{rc??"-"}</span>
@@ -1845,7 +1859,7 @@ function CoachPage({ activities, metrics, wellnessHistory, onLogWellness }: { ac
               <p style={{ fontSize:14,fontWeight:300,fontFamily:"var(--font-display)",color:good===null?"var(--text)":good?"var(--olive)":"var(--terra)",lineHeight:1 }}>{v??"-"}</p>
             </div>
           )):(
-            <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",fontStyle:"italic",padding:"0 4px" }}>Log morning wellness to enable AI coaching</p>
+            <p style={{ fontSize:12,color:"var(--text-muted)",fontFamily:"var(--font-mono)",fontStyle:"italic",padding:"0 4px" }}>Log morning wellness to enable AI coaching</p>
           )}
         </div>
         {/* Log button */}
@@ -1858,7 +1872,7 @@ function CoachPage({ activities, metrics, wellnessHistory, onLogWellness }: { ac
       <div style={{ display:"grid",gridTemplateColumns:"1fr 220px",gap:14,alignItems:"start" }}>
         <div style={{ display:"flex",flexDirection:"column",gap:12 }}>
           <Card p={16}>
-            <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"var(--font-mono)",marginBottom:10 }}>Additional context for AI</p>
+            <p style={{ fontSize:11,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"var(--font-mono)",marginBottom:10 }}>Additional context for AI</p>
             <textarea value={extra} onChange={e=>setExtra(e.target.value)}
               placeholder="Race in 8 days · tight calf · poor nutrition · travel fatigue…"
               style={{ width:"100%",minHeight:60,padding:"8px 10px",boxSizing:"border-box",resize:"vertical",marginBottom:10,fontSize:12,fontFamily:"var(--font-mono)",background:"var(--bg)",border:"1px solid var(--border)",borderRadius:5,color:"var(--text)",lineHeight:1.6 }} />
@@ -1867,12 +1881,12 @@ function CoachPage({ activities, metrics, wellnessHistory, onLogWellness }: { ac
           {rec&&(
             <InsightCard accent="var(--gold)" tag="AI Recommendation">
               <Markdown text={rec} size={13} />
-              <button onClick={()=>setRec(null)} style={{ marginTop:12,fontSize:9,color:"var(--text-subtle)",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--font-mono)",letterSpacing:"0.04em" }}>← NEW EVALUATION</button>
+              <button onClick={()=>setRec(null)} style={{ marginTop:12,fontSize:11,color:"var(--text-muted)",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--font-mono)",letterSpacing:"0.04em" }}>← NEW EVALUATION</button>
             </InsightCard>
           )}
           {metrics?.notes&&(
             <div style={{ padding:"10px 14px",background:"var(--surface)",borderRadius:6,borderLeft:"2px solid var(--border-hi)" }}>
-              <p style={{ fontSize:11,color:"var(--text-muted)",fontStyle:"italic",lineHeight:1.6,fontFamily:"var(--font-display)" }}>&ldquo;{metrics.notes}&rdquo;</p>
+              <p style={{ fontSize:12,color:"var(--text-muted)",fontStyle:"italic",lineHeight:1.6,fontFamily:"var(--font-display)" }}>&ldquo;{metrics.notes}&rdquo;</p>
             </div>
           )}
         </div>
@@ -1882,7 +1896,7 @@ function CoachPage({ activities, metrics, wellnessHistory, onLogWellness }: { ac
         {trendData.length>1&&(
           <Card p={14}>
             <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10 }}>
-              <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"var(--font-mono)" }}>30-day trend</p>
+              <p style={{ fontSize:11,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"var(--font-mono)" }}>30-day trend</p>
               <div style={{ display:"flex",gap:2 }}>
                 {(["recovery","hrv","sleep","fatigue"] as const).map(m=>(
                   <button key={m} onClick={()=>setTrendMetric(m)} style={{ padding:"3px 7px",borderRadius:3,border:`1px solid ${trendMetric===m?trendCfg[m].color:"var(--border)"}`,background:trendMetric===m?trendCfg[m].color+"15":"transparent",color:trendMetric===m?trendCfg[m].color:"var(--text-subtle)",fontSize:8,cursor:"pointer",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.04em" }}>{m==="recovery"?"REC":m.toUpperCase()}</button>
@@ -1908,15 +1922,15 @@ function CoachPage({ activities, metrics, wellnessHistory, onLogWellness }: { ac
           </Card>
         )}
         <Card p={14}>
-          <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"var(--font-mono)",marginBottom:10 }}>Recent load</p>
+          <p style={{ fontSize:11,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"var(--font-mono)",marginBottom:10 }}>Recent load</p>
           {activities.length===0?<EmptyState label="No data" />
             :activities.slice(0,6).map((a,i)=>(
               <div key={a.id} style={{ display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<5?"1px solid var(--border)":"none" }}>
                 <div style={{ minWidth:0,flex:1 }}>
-                  <p style={{ fontSize:11,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{a.title}</p>
-                  <p style={{ fontSize:9,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",marginTop:1 }}>{formatRelDate(a.date)}</p>
+                  <p style={{ fontSize:12,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{a.title}</p>
+                  <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",marginTop:1 }}>{formatRelDate(a.date)}</p>
                 </div>
-                <span style={{ fontSize:13,fontWeight:300,color:tssColor(a.tss??0),fontFamily:"var(--font-display)",flexShrink:0,marginLeft:8 }}>{a.tss??"-"}</span>
+                <span style={{ fontSize:14,fontWeight:300,color:tssColor(a.tss??0),fontFamily:"var(--font-display)",flexShrink:0,marginLeft:8 }}>{a.tss??"-"}</span>
               </div>
             ))
           }
@@ -1935,6 +1949,7 @@ interface FP2{duration:number;intensity:IL;weight:number;temp:number;sport:strin
 interface FPlan{carbs_per_hour:number;fluid_per_hour_ml:number;sodium_per_hour_mg:number;schedule:Array<{minute:number;action:string;type:FT}>;ai_notes:string}
 
 function FuelingPage({ profile }: { profile:Profile|null }) {
+  const mob=useIsMobile();
   const [p,setP]=useState<FP2>({duration:180,intensity:"moderate",weight:profile?.weight_kg??72,temp:20,sport:"cycling"});
   const [plan,setPlan]=useState<FPlan|null>(null);
   const [loading,setLoading]=useState(false);
@@ -1951,11 +1966,11 @@ function FuelingPage({ profile }: { profile:Profile|null }) {
       <PageHeader supra="Nutrition" title="Fueling Planner" />
       <div className="op-grid-2" style={{ display:"grid",gridTemplateColumns:"260px 1fr",gap:14,alignItems:"start" }}>
         <Card p={14}>
-          <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"var(--font-mono)",marginBottom:12 }}>Parameters</p>
+          <p style={{ fontSize:11,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"var(--font-mono)",marginBottom:12 }}>Parameters</p>
           <div style={{ display:"flex",flexDirection:"column",gap:14 }}>
             {/* Sport */}
-            <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:5,alignItems:"center" }}>
-              <span style={{ fontSize:9,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.06em" }}>Sport</span>
+            <div style={{ display:"grid",gridTemplateColumns:mob?"1fr":"1fr 1fr",gap:5,alignItems:"center" }}>
+              <span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.06em" }}>Sport</span>
               <Sel value={p.sport} onChange={v=>setP(x=>({...x,sport:v}))} options={["running","cycling","triathlon","swimming"]} />
             </div>
             {/* Sliders */}
@@ -1967,17 +1982,17 @@ function FuelingPage({ profile }: { profile:Profile|null }) {
               <div key={key}>
                 <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5 }}>
                   <div style={{ display:"flex",alignItems:"center",gap:3 }}>
-                    <span style={{ fontSize:9,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.06em" }}>{label}</span>
+                    <span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.06em" }}>{label}</span>
                     <HintIcon text={hint} />
                   </div>
-                  <span style={{ fontSize:13,fontWeight:300,color:"var(--text)",fontFamily:"var(--font-display)",lineHeight:1 }}>{p[key]}<span style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",marginLeft:2 }}>{unit}</span></span>
+                  <span style={{ fontSize:14,fontWeight:300,color:"var(--text)",fontFamily:"var(--font-display)",lineHeight:1 }}>{p[key]}<span style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",marginLeft:2 }}>{unit}</span></span>
                 </div>
                 <input type="range" min={min} max={max} step={step} value={p[key]} onChange={e=>setP(x=>({...x,[key]:parseInt(e.target.value)}))} style={{ width:"100%",accentColor:"var(--gold)" }} />
               </div>
             ))}
             {/* Intensity */}
             <div>
-              <p style={{ fontSize:9,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6 }}>Intensity</p>
+              <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:6 }}>Intensity</p>
               <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:4 }}>
                 {(["easy","moderate","hard","race"] as IL[]).map(i=>(
                   <button key={i} onClick={()=>setP(x=>({...x,intensity:i}))} style={{ padding:"6px 0",borderRadius:4,cursor:"pointer",fontSize:9,border:`1px solid ${p.intensity===i?"var(--gold)":"var(--border)"}`,background:p.intensity===i?"var(--gold-dim)":"transparent",color:p.intensity===i?"var(--gold)":"var(--text-muted)",fontFamily:"var(--font-mono)",letterSpacing:"0.04em",textTransform:"uppercase" }}>
@@ -1996,12 +2011,12 @@ function FuelingPage({ profile }: { profile:Profile|null }) {
               {[{label:"Carbs",value:plan.carbs_per_hour,unit:"g/h",color:"var(--gold)",hint:"Use mixed carb sources (glucose + fructose) above 60g/h."},{label:"Fluid",value:plan.fluid_per_hour_ml,unit:"ml/h",color:"var(--stone)",hint:"Drink to thirst; use as a reference guide."},{label:"Sodium",value:plan.sodium_per_hour_mg,unit:"mg/h",color:"var(--olive)",hint:"Critical for sessions 90+ min or in heat."}].map(m=>(
                 <Card key={m.label} p={18}>
                   <div style={{ display:"flex",alignItems:"center",gap:5,marginBottom:10 }}>
-                    <p style={{ fontSize:9,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"var(--font-mono)" }}>{m.label}</p>
+                    <p style={{ fontSize:10,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.1em",fontFamily:"var(--font-mono)" }}>{m.label}</p>
                     <HintIcon text={m.hint} />
                   </div>
                   <div style={{ display:"flex",alignItems:"baseline",gap:3 }}>
                     <span style={{ fontSize:22,fontWeight:300,color:m.color,fontFamily:"var(--font-display)",letterSpacing:"-0.02em" }}>{m.value}</span>
-                    <span style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{m.unit}</span>
+                    <span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{m.unit}</span>
                   </div>
                 </Card>
               ))}
@@ -2045,6 +2060,7 @@ function FuelingPage({ profile }: { profile:Profile|null }) {
 // ─── ANALYSIS ────────────────────────────────────────────────────────────────
 
 function AnalysisPage({ activities }: { activities:Activity[] }) {
+  const mob=useIsMobile();
   const [analysis,setAnalysis]=useState<string|null>(null);
   const [loading,setLoading]=useState(false);
   const [period,setPeriod]=useState<6|12|26>(6);
@@ -2068,7 +2084,7 @@ function AnalysisPage({ activities }: { activities:Activity[] }) {
           <Btn size="sm" onClick={run} disabled={loading||!activities.length}>{loading?"Analysing…":"AI Analysis →"}</Btn>
         </div>
       </div>
-      {analysis&&<InsightCard accent="var(--olive)" tag="Performance Intelligence"><div style={{}}><Markdown text={analysis} size={13} /></div><button onClick={()=>setAnalysis(null)} style={{ marginTop:14,fontSize:10,color:"var(--text-subtle)",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--font-mono)" }}>← close</button></InsightCard>}
+      {analysis&&<InsightCard accent="var(--olive)" tag="Performance Intelligence"><div style={{}}><Markdown text={analysis} size={13} /></div><button onClick={()=>setAnalysis(null)} style={{ marginTop:14,fontSize:11,color:"var(--text-muted)",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--font-mono)" }}>← close</button></InsightCard>}
 
       <Card p={20}>
         <SectionTitle mono sub={`Weekly load · last ${period} weeks`} right={
@@ -2079,11 +2095,11 @@ function AnalysisPage({ activities }: { activities:Activity[] }) {
           </div>
         }>Training load history</SectionTitle>
         {tssChart.length>1?(
-          <ResponsiveContainer width="100%" height={160}>
+          <ResponsiveContainer width="100%" height={mob?120:160}>
             <BarChart data={tssChart} barSize={period>12?8:period>6?12:20} margin={{top:8,right:4,bottom:0,left:-18}} barCategoryGap="25%">
               <CartesianGrid strokeDasharray="2 8" stroke="var(--border)" vertical={false} />
-              <XAxis dataKey="week" tick={{fill:"var(--text-subtle)",fontSize:9,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} interval={period>12?2:0} />
-              <YAxis tick={{fill:"var(--text-subtle)",fontSize:9,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} />
+              <XAxis dataKey="week" tick={{fill:"var(--text-subtle)",fontSize:10,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} interval={period>12?2:0} />
+              <YAxis tick={{fill:"var(--text-subtle)",fontSize:10,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} domain={[0,"auto"]} />
               <Tooltip content={<OTooltip />} cursor={{fill:"var(--border)",opacity:0.35,radius:3}} />
               <Bar dataKey="tss" name="Weekly TSS" radius={[3,3,0,0]} fill="var(--gold)" opacity={0.8}>
                 {tssChart.map((_,i)=><Cell key={i} fill={i===tssChart.length-1?"var(--gold)":"var(--gold)"} fillOpacity={i===tssChart.length-1?1:0.65} />)}
@@ -2093,11 +2109,11 @@ function AnalysisPage({ activities }: { activities:Activity[] }) {
         ):<EmptyState label="Log activities to see training load history" />}
       </Card>
 
-      <div className="op-grid-2" style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:14 }}>
+      <div className="op-grid-2" style={{ display:"grid",gridTemplateColumns:mob?"1fr":"1fr 1fr",gap:14 }}>
         <Card p={20}>
           <SectionTitle mono sub="Running · min/km">Pace trend</SectionTitle>
           {pace.length>1?(
-            <ResponsiveContainer width="100%" height={170}>
+            <ResponsiveContainer width="100%" height={mob?130:170}>
               <AreaChart data={pace} margin={{top:8,right:4,bottom:0,left:-18}}>
                 <defs>
                   <linearGradient id="pg" x1="0" y1="0" x2="0" y2="1">
@@ -2106,8 +2122,8 @@ function AnalysisPage({ activities }: { activities:Activity[] }) {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="2 8" stroke="var(--border)" vertical={false} />
-                <XAxis dataKey="label" tick={{fill:"var(--text-subtle)",fontSize:9,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} />
-                <YAxis tick={{fill:"var(--text-subtle)",fontSize:9,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} reversed />
+                <XAxis dataKey="label" tick={{fill:"var(--text-subtle)",fontSize:10,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} />
+                <YAxis tick={{fill:"var(--text-subtle)",fontSize:10,fontFamily:"var(--font-mono)"}} axisLine={false} tickLine={false} reversed />
                 <Tooltip content={<OTooltip />} cursor={{stroke:"var(--border-hi)",strokeWidth:1,strokeDasharray:"3 3"}} />
                 <Area type="monotone" dataKey="pace" stroke="var(--olive)" fill="url(#pg)" strokeWidth={2} dot={{fill:"var(--olive)",r:3,strokeWidth:0}} activeDot={{r:5,fill:"var(--olive)",strokeWidth:0}} name="Pace (min/km)" />
               </AreaChart>
@@ -2122,7 +2138,7 @@ function AnalysisPage({ activities }: { activities:Activity[] }) {
           <ResponsiveContainer width="100%" height={170}>
             <RadarChart data={radar} margin={{top:4,right:24,bottom:4,left:24}}>
               <PolarGrid stroke="var(--border)" strokeDasharray="2 4" gridType="polygon" />
-              <PolarAngleAxis dataKey="attr" tick={{fill:"var(--text-muted)",fontSize:9,fontFamily:"var(--font-mono)",fontWeight:600}} />
+              <PolarAngleAxis dataKey="attr" tick={{fill:"var(--text-muted)",fontSize:11,fontFamily:"var(--font-mono)",fontWeight:600}} />
               <Radar name="Profile" dataKey="val" stroke="var(--gold)" fill="var(--gold)" fillOpacity={0.12} strokeWidth={2} dot={{fill:"var(--gold)",r:3,strokeWidth:0}} />
             </RadarChart>
           </ResponsiveContainer>
@@ -2133,16 +2149,16 @@ function AnalysisPage({ activities }: { activities:Activity[] }) {
         <SectionTitle mono sub="Last 8 weeks">Weekly breakdown</SectionTitle>
         {weekly.length===0?<EmptyState label="No data yet" />:(
           <table style={{ width:"100%",borderCollapse:"collapse" }}>
-            <thead><tr>{["Week","Volume","Load","Sessions","Avg HR","Feel","Consistency"].map(h=><th key={h} style={{ fontSize:9,color:"var(--text-muted)",padding:"0 0 10px",letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:500,textAlign:"left",fontFamily:"var(--font-mono)" }}>{h}</th>)}</tr></thead>
+            <thead><tr>{["Week","Volume","Load","Sessions","Avg HR","Feel","Consistency"].map(h=><th key={h} style={{ fontSize:10,color:"var(--text-muted)",padding:"0 0 10px",letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:500,textAlign:"left",fontFamily:"var(--font-mono)" }}>{h}</th>)}</tr></thead>
             <tbody>
               {weekly.map((w,i)=>(
                 <tr key={i} style={{ borderTop:"1px solid var(--border)" }}>
-                  <td style={{ padding:"9px 0",fontSize:11,color:"var(--text)",fontFamily:"var(--font-mono)" }}>{w.label}</td>
-                  <td style={{ padding:"9px 0",fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{w.volume}</td>
-                  <td style={{ padding:"9px 0",fontSize:11,fontFamily:"var(--font-mono)",fontWeight:600,color:tssColor(w.tss) }}>{w.tss} TSS</td>
-                  <td style={{ padding:"9px 0",fontSize:11,color:"var(--text-muted)" }}>{w.sessions}</td>
-                  <td style={{ padding:"9px 0",fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{w.avgHR}</td>
-                  <td style={{ padding:"9px 0",fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{w.feel}</td>
+                  <td style={{ padding:"9px 0",fontSize:12,color:"var(--text)",fontFamily:"var(--font-mono)" }}>{w.label}</td>
+                  <td style={{ padding:"9px 0",fontSize:12,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{w.volume}</td>
+                  <td style={{ padding:"9px 0",fontSize:12,fontFamily:"var(--font-mono)",fontWeight:600,color:tssColor(w.tss) }}>{w.tss} TSS</td>
+                  <td style={{ padding:"9px 0",fontSize:12,color:"var(--text-muted)" }}>{w.sessions}</td>
+                  <td style={{ padding:"9px 0",fontSize:12,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{w.avgHR}</td>
+                  <td style={{ padding:"9px 0",fontSize:12,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{w.feel}</td>
                   <td style={{ padding:"9px 0" }}>
                     <div style={{ display:"flex",gap:2 }}>
                       {[...Array(7)].map((_,d)=><div key={d} style={{ width:7,height:7,borderRadius:2,background:w.dayMask&(1<<d)?"var(--gold)":"var(--border)",opacity:w.dayMask&(1<<d)?0.8:0.5 }} />)}
@@ -2161,6 +2177,7 @@ function AnalysisPage({ activities }: { activities:Activity[] }) {
 // ─── RACES ───────────────────────────────────────────────────────────────────
 
 function RacesPage({ activities, profile, goal, onGoalChange }: { activities:Activity[]; profile:Profile|null; goal:GoalData|null; onGoalChange:(g:GoalData|null)=>void }) {
+  const mob=useIsMobile();
   const races=activities.filter(a=>a.type==="race");
   const [sel,setSel]=useState<Activity|null>(null);
   const [detail,setDetail]=useState<Activity|null>(null);
@@ -2198,7 +2215,7 @@ function RacesPage({ activities, profile, goal, onGoalChange }: { activities:Act
             <div>
               <p style={{ fontSize:8,color:"var(--gold)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:2 }}>🎯 Goal race</p>
               <p style={{ fontSize:14,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)",lineHeight:1 }}>{goal.name}</p>
-              <p style={{ fontSize:9,color:"var(--text-muted)",fontFamily:"var(--font-mono)",marginTop:2 }}>{goal.distance}{goal.targetTime?` · target ${goal.targetTime}`:""}</p>
+              <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",marginTop:2 }}>{goal.distance}{goal.targetTime?` · target ${goal.targetTime}`:""}</p>
             </div>
             {goal.date&&(()=>{const d=Math.ceil((new Date(goal.date).getTime()-Date.now())/86400000);return(
               <div style={{ paddingLeft:16,borderLeft:"1px solid var(--border)",textAlign:"center" }}>
@@ -2209,7 +2226,7 @@ function RacesPage({ activities, profile, goal, onGoalChange }: { activities:Act
             );})()}
           </div>
           <div style={{ background:"var(--surface)",padding:"11px 12px",display:"flex",alignItems:"center",borderLeft:"1px solid var(--border)" }}>
-            <button onClick={()=>setShowGoalEditor(true)} style={{ fontSize:9,color:"var(--text-subtle)",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--font-mono)",letterSpacing:"0.06em",textTransform:"uppercase" }}>Edit</button>
+            <button onClick={()=>setShowGoalEditor(true)} style={{ fontSize:11,color:"var(--text-muted)",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--font-mono)",letterSpacing:"0.06em",textTransform:"uppercase" }}>Edit</button>
           </div>
           <div style={{ background:"var(--surface)",padding:"11px 12px",display:"flex",alignItems:"center",borderLeft:"1px solid var(--border)" }}>
             <button onClick={()=>onGoalChange(null)} style={{ fontSize:9,color:"var(--terra)",background:"none",border:"none",cursor:"pointer",fontFamily:"var(--font-mono)",letterSpacing:"0.06em",textTransform:"uppercase" }}>Clear</button>
@@ -2225,8 +2242,8 @@ function RacesPage({ activities, profile, goal, onGoalChange }: { activities:Act
       {showGoalEditor&&(
         <Card p={16}>
           <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14 }}>
-            <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"var(--font-mono)" }}>Goal race</p>
-            <button onClick={()=>setShowGoalEditor(false)} style={{ width:22,height:22,borderRadius:4,border:"1px solid var(--border)",background:"transparent",cursor:"pointer",color:"var(--text-muted)",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center" }}>×</button>
+            <p style={{ fontSize:11,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"var(--font-mono)" }}>Goal race</p>
+            <button onClick={()=>setShowGoalEditor(false)} style={{ width:22,height:22,borderRadius:4,border:"1px solid var(--border)",background:"transparent",cursor:"pointer",color:"var(--text-muted)",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center" }}>×</button>
           </div>
           <GoalEditor initial={goal} onSave={g=>{onGoalChange(g);setShowGoalEditor(false);}} />
         </Card>
@@ -2251,15 +2268,15 @@ function RacesPage({ activities, profile, goal, onGoalChange }: { activities:Act
                           <SportIcon sport={r.sport} color={c} size={12} />
                         </div>
                         <div style={{ minWidth:0 }}>
-                          <p style={{ fontSize:13,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)",marginBottom:2,lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{r.title}</p>
-                          <p style={{ fontSize:9,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{r.date} · {fmtDist(r.distance_meters,r.sport)} · {fmtDuration(r.duration_seconds)}</p>
+                          <p style={{ fontSize:14,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)",marginBottom:2,lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{r.title}</p>
+                          <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{r.date} · {fmtDist(r.distance_meters,r.sport)} · {fmtDuration(r.duration_seconds)}</p>
                         </div>
                       </div>
                       <div style={{ display:"flex",gap:14,alignItems:"center",flexShrink:0 }}>
-                        {r.avg_pace_sec_km&&<div><p style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:1 }}>pace</p><p style={{ fontSize:13,fontWeight:300,fontFamily:"var(--font-display)",color:"var(--olive)",lineHeight:1 }}>{fmtPace(r.avg_pace_sec_km)}</p></div>}
-                        {r.avg_heart_rate&&<div><p style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:1 }}>hr</p><p style={{ fontSize:13,fontWeight:300,fontFamily:"var(--font-display)",color:"var(--text)",lineHeight:1 }}>{r.avg_heart_rate}</p></div>}
-                        {r.tss&&<div><p style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:1 }}>tss</p><p style={{ fontSize:13,fontWeight:300,fontFamily:"var(--font-display)",color:tssColor(r.tss),lineHeight:1 }}>{r.tss}</p></div>}
-                        {r.feel_score&&<div><p style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:1 }}>feel</p><p style={{ fontSize:13,fontWeight:300,fontFamily:"var(--font-display)",color:"var(--gold)",lineHeight:1 }}>★{r.feel_score}</p></div>}
+                        {r.avg_pace_sec_km&&<div><p style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:1 }}>pace</p><p style={{ fontSize:14,fontWeight:300,fontFamily:"var(--font-display)",color:"var(--olive)",lineHeight:1 }}>{fmtPace(r.avg_pace_sec_km)}</p></div>}
+                        {r.avg_heart_rate&&<div><p style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:1 }}>hr</p><p style={{ fontSize:14,fontWeight:300,fontFamily:"var(--font-display)",color:"var(--text)",lineHeight:1 }}>{r.avg_heart_rate}</p></div>}
+                        {r.tss&&<div><p style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:1 }}>tss</p><p style={{ fontSize:14,fontWeight:300,fontFamily:"var(--font-display)",color:tssColor(r.tss),lineHeight:1 }}>{r.tss}</p></div>}
+                        {r.feel_score&&<div><p style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.06em",marginBottom:1 }}>feel</p><p style={{ fontSize:14,fontWeight:300,fontFamily:"var(--font-display)",color:"var(--gold)",lineHeight:1 }}>★{r.feel_score}</p></div>}
                         <div style={{ display:"flex",gap:4 }}>
                           <button onClick={()=>setDetail(r)} style={{ padding:"5px 10px",borderRadius:4,cursor:"pointer",fontSize:9,border:"1px solid var(--border)",background:"transparent",color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>Detail</button>
                           <button onClick={()=>{setSel(r);setAnalysis(null);analyze(r);}} style={{ padding:"5px 10px",borderRadius:4,cursor:"pointer",fontSize:9,border:`1px solid ${isSelected?"var(--gold)":"var(--border)"}`,background:isSelected?"var(--gold-dim)":"transparent",color:isSelected?"var(--gold)":"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{loading&&sel?.id===r.id?"…":"AI"}</button>
@@ -2296,7 +2313,7 @@ function ActivitiesPage({ activities, profile, onRefresh }: { activities:Activit
   const [toast,setToast]=useState<{message:string;type:"success"|"error"|"info"}|null>(null);
   const [filter,setFilter]=useState("all");
   const [search,setSearch]=useState("");
-  const [sort,setSort]=useState<"date"|"tss"|"distance">("date");
+  const [sort,setSort]=useState<"date"|"tss"|"distance"|"duration">("date");
 
   const showToast=(msg:string,type:"success"|"error"|"info"="success")=>setToast({message:msg,type});
 
@@ -2304,17 +2321,50 @@ function ActivitiesPage({ activities, profile, onRefresh }: { activities:Activit
   const handleDelete=async(id:string)=>{try{await fetch("/api/activities",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({id})});showToast("Deleted");setDeleteTarget(null);onRefresh();}catch{showToast("Error","error");}};
 
   const sports=["all",...Array.from(new Set(activities.map(a=>a.sport)))];
-  let filtered=filter==="all"?activities:activities.filter(a=>a.sport===filter);
-  if(search)filtered=filtered.filter(a=>a.title.toLowerCase().includes(search.toLowerCase())||(a.notes??"").toLowerCase().includes(search.toLowerCase()));
-  if(sort==="tss")filtered=[...filtered].sort((a,b)=>(b.tss??0)-(a.tss??0));
-  if(sort==="distance")filtered=[...filtered].sort((a,b)=>(b.distance_meters??0)-(a.distance_meters??0));
-
-  const totalTSS=filtered.reduce((s,a)=>s+(a.tss??0),0);
-  const totalDist=filtered.reduce((s,a)=>s+(a.distance_meters??0)/1000,0);
+  const filtered=useMemo(()=>{
+    let f=filter==="all"?activities:activities.filter(a=>a.sport===filter);
+    if(search)f=f.filter(a=>a.title.toLowerCase().includes(search.toLowerCase())||(a.notes??"").toLowerCase().includes(search.toLowerCase()));
+    if(sort==="tss")f=[...f].sort((a,b)=>(b.tss??0)-(a.tss??0));
+    if(sort==="distance")f=[...f].sort((a,b)=>(b.distance_meters??0)-(a.distance_meters??0));
+    if(sort==="duration")f=[...f].sort((a,b)=>(b.duration_seconds??0)-(a.duration_seconds??0));
+    return f;
+  },[activities,filter,search,sort]);
+  const totalTSS=useMemo(()=>filtered.reduce((s,a)=>s+(a.tss??0),0),[filtered]);
+  const totalDist=useMemo(()=>filtered.reduce((s,a)=>s+(a.distance_meters??0)/1000,0),[filtered]);
 
   return (
     <div style={{ display:"flex",flexDirection:"column",gap:16 }}>
       {deleteTarget&&<Confirm message="Delete this activity? This cannot be undone." onConfirm={()=>handleDelete(deleteTarget)} onCancel={()=>setDeleteTarget(null)} />}
+      
+      <style>{`
+        /* ── Base font size ── */
+        body { font-size: 14px; }
+        
+        /* ── Dark mode contrast boost ── */
+        [data-theme="dark"] {
+          --text-muted: #B8B4AA;
+          --text-subtle: #8A867E;
+          --border: #383832;
+          --border-hi: #4A4A42;
+        }
+        /* ── Light mode contrast boost ── */
+        :root {
+          --text-muted: #5A574F;
+          --text-subtle: #888480;
+        }
+
+        /* ── Mobile ── */
+        @media (max-width: 640px) {
+          .op-chart-tall { height: 140px !important; }
+          .op-grid-2 { grid-template-columns: 1fr !important; }
+          .op-grid-form { grid-template-columns: 1fr !important; }
+          .recharts-wrapper { touch-action: pan-y; }
+        }
+
+        /* ── Charts ── */
+        .recharts-bar-rectangle { shape-rendering: crispEdges; }
+        .recharts-cartesian-axis-tick text { font-size: 10px !important; }
+      `}</style>
       {toast&&<Toast message={toast.message} type={toast.type} onDone={()=>setToast(null)} />}
       {(showForm&&!editTarget)&&<ActivityFormModal onSave={handleSave} onClose={()=>setShowForm(false)} saving={saving} />}
       {editTarget&&<ActivityFormModal initial={actToForm(editTarget)} onSave={handleSave} onClose={()=>setEditTarget(null)} saving={saving} />}
@@ -2324,21 +2374,21 @@ function ActivitiesPage({ activities, profile, onRefresh }: { activities:Activit
 
       {/* Filters */}
       <div style={{ display:"flex",gap:10,alignItems:"center",flexWrap:"wrap" }}>
-        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search…" style={{ padding:"7px 12px",borderRadius:6,border:"1px solid var(--border)",background:"var(--surface)",color:"var(--text)",fontSize:11,width:160,fontFamily:"var(--font-mono)",boxSizing:"border-box" }} />
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search…" style={{ padding:"7px 12px",borderRadius:6,border:"1px solid var(--border)",background:"var(--surface)",color:"var(--text)",fontSize:12,width:160,fontFamily:"var(--font-mono)",boxSizing:"border-box" }} />
         <div style={{ display:"flex",gap:5,flexWrap:"wrap" }}>
           {sports.map(s=><button key={s} onClick={()=>setFilter(s)} style={{ padding:"5px 11px",borderRadius:20,border:`1px solid ${filter===s?"var(--gold)":"var(--border)"}`,background:filter===s?"var(--gold-dim)":"transparent",color:filter===s?"var(--gold)":"var(--text-muted)",fontSize:10,cursor:"pointer",textTransform:"capitalize",fontFamily:"var(--font-mono)" }}>{s}</button>)}
         </div>
         <div style={{ marginLeft:"auto",display:"flex",alignItems:"center",gap:6 }}>
-          <span style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)" }}>sort</span>
+          <span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>sort</span>
           {(["date","tss","distance"] as const).map(s=><button key={s} onClick={()=>setSort(s)} style={{ padding:"4px 9px",borderRadius:4,border:`1px solid ${sort===s?"var(--gold)":"var(--border)"}`,background:sort===s?"var(--gold-dim)":"transparent",color:sort===s?"var(--gold)":"var(--text-muted)",fontSize:10,cursor:"pointer",fontFamily:"var(--font-mono)" }}>{s}</button>)}
         </div>
       </div>
 
       {filtered.length>0&&(
         <div style={{ display:"flex",gap:16,padding:"8px 0",borderBottom:"1px solid var(--border)" }}>
-          <span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}><strong style={{ color:"var(--text)" }}>{filtered.length}</strong> sessions</span>
-          <span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}><strong style={{ color:"var(--text)" }}>{totalDist.toFixed(0)} km</strong></span>
-          <span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}><strong style={{ color:"var(--text)" }}>{totalTSS}</strong> TSS</span>
+          <span style={{ fontSize:12,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}><strong style={{ color:"var(--text)" }}>{filtered.length}</strong> sessions</span>
+          <span style={{ fontSize:12,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}><strong style={{ color:"var(--text)" }}>{totalDist.toFixed(0)} km</strong></span>
+          <span style={{ fontSize:12,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}><strong style={{ color:"var(--text)" }}>{totalTSS}</strong> TSS</span>
         </div>
       )}
 
@@ -2349,7 +2399,7 @@ function ActivitiesPage({ activities, profile, onRefresh }: { activities:Activit
             <>
               <div className="op-act-grid" style={{ display:"grid",gridTemplateColumns:"32px 1fr 80px 80px 80px 56px 40px 48px",gap:12,paddingBottom:10,borderBottom:"1px solid var(--border)",marginBottom:2 }}>
                 {["","Session","Duration","Distance",<span key="e" className="op-col-elev">Elevation</span>,"Load","Feel",""].map((h,i)=>(
-                  <p key={i} style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:"var(--font-mono)" }}>{h}</p>
+                  <p key={i} style={{ fontSize:11,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.08em",fontFamily:"var(--font-mono)" }}>{h}</p>
                 ))}
               </div>
               {filtered.map((act,i)=>(
@@ -2410,7 +2460,7 @@ function ProfilePage({ profile, onSaved }: { profile:Profile|null; onSaved:()=>v
   const Row = ({ label, hint, children }: { label:string; hint?:string; children:React.ReactNode }) => (
     <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,alignItems:"center",padding:"8px 0",borderBottom:"1px solid var(--border)" }}>
       <div style={{ display:"flex",alignItems:"center",gap:4 }}>
-        <span style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.07em" }}>{label}</span>
+        <span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.07em" }}>{label}</span>
         {hint&&<HintIcon text={hint} />}
       </div>
       {children}
@@ -2425,9 +2475,9 @@ function ProfilePage({ profile, onSaved }: { profile:Profile|null; onSaved:()=>v
           <span style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",letterSpacing:"0.05em" }}>{z.z}</span>
           <div style={{ display:"flex",alignItems:"center",gap:6 }}>
             <div style={{ width:3,height:10,borderRadius:2,background:z.color,flexShrink:0 }} />
-            <span style={{ fontSize:11,color:"var(--text-muted)" }}>{z.n}</span>
+            <span style={{ fontSize:12,color:"var(--text-muted)" }}>{z.n}</span>
           </div>
-          <span style={{ fontSize:11,color:"var(--text)",fontFamily:"var(--font-mono)",letterSpacing:"0.02em" }}>{z.val}</span>
+          <span style={{ fontSize:12,color:"var(--text)",fontFamily:"var(--font-mono)",letterSpacing:"0.02em" }}>{z.val}</span>
         </div>
       ))}
     </div>
@@ -2500,7 +2550,7 @@ function ProfilePage({ profile, onSaved }: { profile:Profile|null; onSaved:()=>v
         {/* LEFT col: personal + thresholds */}
         <div style={{ display:"flex",flexDirection:"column",gap:14 }}>
           <Card p={16}>
-            <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.14em",fontFamily:"var(--font-mono)",marginBottom:10 }}>Personal</p>
+            <p style={{ fontSize:11,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.14em",fontFamily:"var(--font-mono)",marginBottom:10 }}>Personal</p>
             <div>
               <Row label="Name"><Input value={f.full_name} onChange={s("full_name")} placeholder="Carlos Almeida" /></Row>
               <Row label="Born"><Input type="date" value={f.birth_date} onChange={s("birth_date")} /></Row>
@@ -2513,7 +2563,7 @@ function ProfilePage({ profile, onSaved }: { profile:Profile|null; onSaved:()=>v
           </Card>
 
           <Card p={16}>
-            <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.14em",fontFamily:"var(--font-mono)",marginBottom:10 }}>Performance thresholds</p>
+            <p style={{ fontSize:11,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.14em",fontFamily:"var(--font-mono)",marginBottom:10 }}>Performance thresholds</p>
             <div>
               <Row label="FTP" hint="Functional Threshold Power — max 1h average power. Powers TSS, IF and all cycling zones.">
                 <Input value={f.ftp_watts} onChange={s("ftp_watts")} placeholder="280 W" />
@@ -2533,7 +2583,7 @@ function ProfilePage({ profile, onSaved }: { profile:Profile|null; onSaved:()=>v
           {powerZones.length>0&&(
             <Card p={16}>
               <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10 }}>
-                <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.14em",fontFamily:"var(--font-mono)" }}>Power zones</p>
+                <p style={{ fontSize:11,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.14em",fontFamily:"var(--font-mono)" }}>Power zones</p>
                 <span style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)" }}>Coggan · FTP {ftp}W</span>
               </div>
               <ZoneTable zones={powerZones} />
@@ -2543,7 +2593,7 @@ function ProfilePage({ profile, onSaved }: { profile:Profile|null; onSaved:()=>v
           {hrZones.length>0&&(
             <Card p={16}>
               <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10 }}>
-                <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.14em",fontFamily:"var(--font-mono)" }}>HR zones</p>
+                <p style={{ fontSize:11,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.14em",fontFamily:"var(--font-mono)" }}>HR zones</p>
                 <span style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)" }}>Friel · LTHR {lthr} bpm</span>
               </div>
               <ZoneTable zones={hrZones} />
@@ -2553,7 +2603,7 @@ function ProfilePage({ profile, onSaved }: { profile:Profile|null; onSaved:()=>v
           {vdotPaces.length>0&&(
             <Card p={16}>
               <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10 }}>
-                <p style={{ fontSize:9,color:"var(--text-subtle)",textTransform:"uppercase",letterSpacing:"0.14em",fontFamily:"var(--font-mono)" }}>Training paces</p>
+                <p style={{ fontSize:11,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.14em",fontFamily:"var(--font-mono)" }}>Training paces</p>
                 <span style={{ fontSize:8,color:"var(--text-subtle)",fontFamily:"var(--font-mono)" }}>Daniels · VDOT {vdot}</span>
               </div>
               <ZoneTable zones={vdotPaces} />
@@ -2562,7 +2612,7 @@ function ProfilePage({ profile, onSaved }: { profile:Profile|null; onSaved:()=>v
 
           {!ftp&&!lthr&&!vdot&&(
             <Card p={20} style={{ textAlign:"center",opacity:0.6 }}>
-              <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",lineHeight:1.7 }}>
+              <p style={{ fontSize:12,color:"var(--text-muted)",fontFamily:"var(--font-mono)",lineHeight:1.7 }}>
                 Add FTP, LTHR or VDOT above to see your power zones, HR zones and training paces automatically calculated.
               </p>
             </Card>
@@ -2934,7 +2984,7 @@ function Sidebar({ active, onChange, profile, onSignOut, dark, onToggleTheme }: 
         <OlympeaksLogo size={22} />
         <div>
           <p style={{ fontSize:12,fontWeight:600,color:"var(--text)",letterSpacing:"0.01em",fontFamily:"var(--font-display)" }}>Olympeaks</p>
-          <p style={{ fontSize:9,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",letterSpacing:"0.08em",marginTop:1 }}>ATHLETE OS</p>
+          <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",letterSpacing:"0.08em",marginTop:1 }}>ATHLETE OS</p>
         </div>
       </div>
 
@@ -2969,7 +3019,7 @@ function Sidebar({ active, onChange, profile, onSignOut, dark, onToggleTheme }: 
           </div>
           <div style={{ flex:1,minWidth:0 }}>
             <p style={{ fontSize:12,fontWeight:500,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{profile?.full_name??"Athlete"}</p>
-            <p style={{ fontSize:9,color:"var(--text-muted)",textTransform:"capitalize",fontFamily:"var(--font-mono)" }}>{profile?.sport??"endurance"}</p>
+            <p style={{ fontSize:10,color:"var(--text-muted)",textTransform:"capitalize",fontFamily:"var(--font-mono)" }}>{profile?.sport??"endurance"}</p>
           </div>
           <span onClick={e=>{e.stopPropagation();onSignOut();}} title="Sign out" style={{ display:"flex",alignItems:"center",cursor:"pointer",padding:"2px",flexShrink:0,color:"var(--text-subtle)" }}>
             <IconSignOut size={12} />
@@ -2982,9 +3032,9 @@ function Sidebar({ active, onChange, profile, onSignOut, dark, onToggleTheme }: 
 
 // ─── APP SHELL ────────────────────────────────────────────────────────────────
 
+const supabase=createClient();
 export function AppShell() {
   const router=useRouter();
-  const supabase=createClient();
   const {dark,toggle}=useTheme();
   const [page,setPage]=useState<PageId>("dashboard");
   const [profile,setProfile]=useState<Profile|null>(null);
@@ -3016,9 +3066,9 @@ export function AppShell() {
       // Load goal from localStorage
       try { const g=localStorage.getItem("op-goal"); if(g) setGoal(JSON.parse(g)); } catch {}
     } finally { setLoading(false); }
-  },[supabase,router]);
+  },[]);// eslint-disable-line
 
-  useEffect(()=>{load();},[load]);
+  useEffect(()=>{load();},[]);// eslint-disable-line
 
   // Handle ?strava= param from OAuth redirect — runs at top level, not inside SyncPage
   useEffect(()=>{
@@ -3064,7 +3114,7 @@ export function AppShell() {
         <header style={{ position:"sticky",top:0,zIndex:20,background:"var(--bg)",borderBottom:"1px solid var(--border)",padding: mob ? "0 14px" : "0 28px",height:44,display:"flex",justifyContent:"space-between",alignItems:"center",flexShrink:0 }}>
           <div style={{ display:"flex",alignItems:"center",gap:10 }}>
             {mob && <OlympeaksLogo size={18} />}
-            <span style={{ fontSize:9,color:"var(--text-subtle)",letterSpacing:"0.14em",textTransform:"uppercase",fontFamily:"var(--font-mono)" }}>Week {getWeekN()}</span>
+            <span style={{ fontSize:11,color:"var(--text-muted)",letterSpacing:"0.14em",textTransform:"uppercase",fontFamily:"var(--font-mono)" }}>Week {getWeekN()}</span>
             {!mob && (
               <svg width="32" height="6" viewBox="0 0 32 6" fill="none">
                 <path d="M0,3 L4,3 L4,0 L8,0 L8,6 L12,6 L12,0 L16,0 L16,3 L20,3 L20,0 L24,0 L24,6 L28,6 L28,3 L32,3" stroke="var(--border-hi)" strokeWidth="0.8" fill="none" />
@@ -3141,7 +3191,8 @@ function getBestForDistance(acts: Activity[], distMeters: number, sport: string,
   });
 }
 
-function RecordsPage({ activities, profile }: { activities: Activity[]; profile: Profile | null }) {
+export function RecordsPage({ activities, profile }: { activities: Activity[]; profile: Profile | null }) {
+  const mob=useIsMobile();
   const [sport, setSport] = useState<"all"|"running"|"cycling"|"swimming">("running");
   const [detail, setDetail] = useState<Activity|null>(null);
 
@@ -3181,7 +3232,7 @@ function RecordsPage({ activities, profile }: { activities: Activity[]; profile:
       {/* Header */}
       <div style={{ display:"flex",alignItems:"center",gap:1,background:"var(--border)",borderRadius:8,overflow:"hidden" }}>
         <div style={{ background:"var(--surface)",padding:"12px 18px",flex:1 }}>
-          <p style={{ fontSize:10,color:"var(--text-subtle)",letterSpacing:"0.16em",textTransform:"uppercase",marginBottom:3,fontFamily:"var(--font-mono)" }}>Performance</p>
+          <p style={{ fontSize:11,color:"var(--text-muted)",letterSpacing:"0.16em",textTransform:"uppercase",marginBottom:3,fontFamily:"var(--font-mono)" }}>Performance</p>
           <p style={{ fontSize:18,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)",lineHeight:1 }}>Personal Records</p>
         </div>
         {[
@@ -3200,7 +3251,7 @@ function RecordsPage({ activities, profile }: { activities: Activity[]; profile:
       {/* Sport filter */}
       <div style={{ display:"flex",gap:4 }}>
         {(["running","cycling","swimming"] as const).map(s=>(
-          <button key={s} onClick={()=>setSport(s)} style={{ padding:"5px 14px",borderRadius:4,border:`1px solid ${sport===s?"var(--gold)":"var(--border)"}`,background:sport===s?"var(--gold-dim)":"transparent",color:sport===s?"var(--gold)":"var(--text-muted)",fontSize:11,fontFamily:"var(--font-mono)",cursor:"pointer",textTransform:"capitalize" }}>
+          <button key={s} onClick={()=>setSport(s)} style={{ padding:"5px 14px",borderRadius:4,border:`1px solid ${sport===s?"var(--gold)":"var(--border)"}`,background:sport===s?"var(--gold-dim)":"transparent",color:sport===s?"var(--gold)":"var(--text-muted)",fontSize:12,fontFamily:"var(--font-mono)",cursor:"pointer",textTransform:"capitalize" }}>
             {s}
           </button>
         ))}
@@ -3229,38 +3280,38 @@ function RecordsPage({ activities, profile }: { activities: Activity[]; profile:
                   <div style={{ padding:"12px 16px",display:"flex",alignItems:"center",gap:16,flexWrap:"wrap" }}>
                     {/* Distance badge */}
                     <div style={{ minWidth:70 }}>
-                      <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:2 }}>{r.sport}</p>
+                      <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:2 }}>{r.sport}</p>
                       <p style={{ fontSize:15,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)",lineHeight:1 }}>{r.label}</p>
                     </div>
                     {/* PR value — big */}
                     <div style={{ flex:1 }}>
-                      <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:2 }}>PR {r.sport==="running"?"pace":r.sport==="cycling"?"speed":"pace"}</p>
+                      <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:2 }}>PR {r.sport==="running"?"pace":r.sport==="cycling"?"speed":"pace"}</p>
                       <p style={{ fontSize:22,fontWeight:300,fontFamily:"var(--font-display)",color:isRecent?"var(--gold)":"var(--text)",lineHeight:1 }}>{displayVal}</p>
                     </div>
                     {/* Time */}
                     <div>
-                      <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:2 }}>Time</p>
+                      <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:2 }}>Time</p>
                       <p style={{ fontSize:14,fontWeight:300,fontFamily:"var(--font-display)",color:"var(--text)",lineHeight:1 }}>{fmtDuration(r.normSec)}</p>
                     </div>
                     {/* HR */}
                     {r.best.avg_heart_rate && (
                       <div>
-                        <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:2 }}>Avg HR</p>
+                        <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:2 }}>Avg HR</p>
                         <p style={{ fontSize:14,fontWeight:300,fontFamily:"var(--font-display)",color:"var(--terra)",lineHeight:1 }}>{r.best.avg_heart_rate} bpm</p>
                       </div>
                     )}
                     {/* vs prev */}
                     {prevVal && improvement !== null && (
                       <div>
-                        <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:2 }}>vs Prev</p>
-                        <p style={{ fontSize:13,fontFamily:"var(--font-mono)",color:improvement>0?"var(--olive)":"var(--terra)",lineHeight:1 }}>
+                        <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:2 }}>vs Prev</p>
+                        <p style={{ fontSize:14,fontFamily:"var(--font-mono)",color:improvement>0?"var(--olive)":"var(--terra)",lineHeight:1 }}>
                           {improvement>0?`↑ ${improvement}%`:`↓ ${Math.abs(improvement)}%`}
                         </p>
                       </div>
                     )}
                     {/* Date + badge */}
                     <div style={{ textAlign:"right" }}>
-                      <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",marginBottom:4 }}>{r.best.date}</p>
+                      <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",marginBottom:4 }}>{r.best.date}</p>
                       {isRecent && <span style={{ fontSize:9,color:"var(--gold)",fontFamily:"var(--font-mono)",background:"var(--gold-dim)",border:"1px solid var(--gold)30",borderRadius:3,padding:"2px 6px",letterSpacing:"0.06em" }}>NEW ★</span>}
                     </div>
                   </div>
@@ -3278,7 +3329,8 @@ function RecordsPage({ activities, profile }: { activities: Activity[]; profile:
 // ═══════════════════════════════════════════════════════════════════════════
 // COMPARE PAGE — Side-by-side race/activity deep comparison
 // ═══════════════════════════════════════════════════════════════════════════
-function ComparePage({ activities, profile }: { activities: Activity[]; profile: Profile | null }) {
+export function ComparePage({ activities, profile }: { activities: Activity[]; profile: Profile | null }) {
+  const mob=useIsMobile();
   const [leftId, setLeftId] = useState<string>("");
   const [rightId, setRightId] = useState<string>("");
   const [tab, setTab] = useState<"overview"|"charts"|"splits">("overview");
@@ -3288,7 +3340,7 @@ function ComparePage({ activities, profile }: { activities: Activity[]; profile:
 
   const selectStyle: React.CSSProperties = {
     width:"100%", padding:"9px 12px", background:"var(--bg)", border:"1px solid var(--border)",
-    borderRadius:6, color:"var(--text)", fontFamily:"var(--font-mono)", fontSize:11,
+    borderRadius:6, color:"var(--text)", fontFamily:"var(--font-mono)", fontSize:12,
     cursor:"pointer", outline:"none",
   };
 
@@ -3424,11 +3476,11 @@ function ComparePage({ activities, profile }: { activities: Activity[]; profile:
       {/* Header */}
       <div style={{ display:"flex",alignItems:"center",gap:1,background:"var(--border)",borderRadius:8,overflow:"hidden" }}>
         <div style={{ background:"var(--surface)",padding:"12px 18px",flex:1 }}>
-          <p style={{ fontSize:10,color:"var(--text-subtle)",letterSpacing:"0.16em",textTransform:"uppercase",marginBottom:3,fontFamily:"var(--font-mono)" }}>Analysis</p>
+          <p style={{ fontSize:11,color:"var(--text-muted)",letterSpacing:"0.16em",textTransform:"uppercase",marginBottom:3,fontFamily:"var(--font-mono)" }}>Analysis</p>
           <p style={{ fontSize:18,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)",lineHeight:1 }}>Race Comparator</p>
         </div>
         <div style={{ background:"var(--surface)",padding:"12px 18px",borderLeft:"1px solid var(--border)" }}>
-          <p style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4 }}>Metrics</p>
+          <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4 }}>Metrics</p>
           <p style={{ fontSize:18,fontWeight:300,fontFamily:"var(--font-display)",color:"var(--text)" }}>{metrics.length}</p>
         </div>
       </div>
@@ -3462,9 +3514,9 @@ function ComparePage({ activities, profile }: { activities: Activity[]; profile:
           <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
             {([left, right] as const).map((act,i)=>(
               <Card key={i} p={14} style={{ borderTop:`2px solid ${i===0?leftColor:rightColor}` }}>
-                <p style={{ fontSize:11,fontWeight:500,color:"var(--text)",fontFamily:"var(--font-display)",fontStyle:"italic",marginBottom:4 }}>{act.title}</p>
-                <p style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{act.date} · {act.sport} · {act.type}</p>
-                <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",marginTop:3 }}>{fmtDist(act.distance_meters,act.sport)} · {fmtDuration(act.duration_seconds)}</p>
+                <p style={{ fontSize:12,fontWeight:500,color:"var(--text)",fontFamily:"var(--font-display)",fontStyle:"italic",marginBottom:4 }}>{act.title}</p>
+                <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{act.date} · {act.sport} · {act.type}</p>
+                <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",marginTop:3 }}>{fmtDist(act.distance_meters,act.sport)} · {fmtDuration(act.duration_seconds)}</p>
               </Card>
             ))}
           </div>
@@ -3472,7 +3524,7 @@ function ComparePage({ activities, profile }: { activities: Activity[]; profile:
           {/* Tabs */}
           <div style={{ display:"flex",gap:1,background:"var(--border)",borderRadius:6,padding:2,width:"fit-content" }}>
             {(["overview","charts","splits"] as const).map(t=>(
-              <button key={t} onClick={()=>setTab(t)} style={{ padding:"5px 16px",borderRadius:4,border:"none",background:tab===t?"var(--surface)":"transparent",color:tab===t?"var(--text)":"var(--text-muted)",fontSize:11,cursor:"pointer",fontFamily:"var(--font-mono)",letterSpacing:"0.04em",textTransform:"capitalize" }}>{t}</button>
+              <button key={t} onClick={()=>setTab(t)} style={{ padding:"5px 16px",borderRadius:4,border:"none",background:tab===t?"var(--surface)":"transparent",color:tab===t?"var(--text)":"var(--text-muted)",fontSize:12,cursor:"pointer",fontFamily:"var(--font-mono)",letterSpacing:"0.04em",textTransform:"capitalize" }}>{t}</button>
             ))}
           </div>
 
@@ -3480,17 +3532,17 @@ function ComparePage({ activities, profile }: { activities: Activity[]; profile:
           {tab==="overview" && (
             <Card p={0}>
               <div style={{ padding:"10px 16px",borderBottom:"1px solid var(--border)",display:"grid",gridTemplateColumns:"1fr 1fr 1fr 80px",gap:8,alignItems:"center" }}>
-                <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>Metric</p>
+                <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>Metric</p>
                 <p style={{ fontSize:10,color:leftColor,fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>A</p>
                 <p style={{ fontSize:10,color:rightColor,fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>B</p>
-                <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",textAlign:"right" }}>Δ</p>
+                <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",textAlign:"right" }}>Δ</p>
               </div>
               {metrics.map((m,i)=>(
                 <div key={i} style={{ padding:"9px 16px",borderBottom:i<metrics.length-1?"1px solid var(--border)":undefined,display:"grid",gridTemplateColumns:"1fr 1fr 1fr 80px",gap:8,alignItems:"center",background:i%2===0?"transparent":"var(--surface-hi, var(--bg))20" }}>
-                  <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{m.label}</p>
-                  <p style={{ fontSize:13,fontWeight:300,fontFamily:"var(--font-display)",color:m.diff?.aWins?"var(--gold)":"var(--text)" }}>{m.leftVal}</p>
-                  <p style={{ fontSize:13,fontWeight:300,fontFamily:"var(--font-display)",color:m.diff&&!m.diff.aWins?"var(--gold)":"var(--text)" }}>{m.rightVal}</p>
-                  <p style={{ fontSize:11,fontFamily:"var(--font-mono)",color:m.diff?.better?"var(--olive)":"var(--terra)",textAlign:"right" }}>
+                  <p style={{ fontSize:12,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{m.label}</p>
+                  <p style={{ fontSize:14,fontWeight:300,fontFamily:"var(--font-display)",color:m.diff?.aWins?"var(--gold)":"var(--text)" }}>{m.leftVal}</p>
+                  <p style={{ fontSize:14,fontWeight:300,fontFamily:"var(--font-display)",color:m.diff&&!m.diff.aWins?"var(--gold)":"var(--text)" }}>{m.rightVal}</p>
+                  <p style={{ fontSize:12,fontFamily:"var(--font-mono)",color:m.diff?.better?"var(--olive)":"var(--terra)",textAlign:"right" }}>
                     {m.diff ? `${m.diff.pct}%` : "—"}
                   </p>
                 </div>
@@ -3510,7 +3562,7 @@ function ComparePage({ activities, profile }: { activities: Activity[]; profile:
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                       <XAxis dataKey="metric" tick={{ fontSize:10, fill:"var(--text-muted)", fontFamily:"var(--font-mono)" }} axisLine={false} tickLine={false} />
                       <YAxis tick={{ fontSize:10, fill:"var(--text-muted)", fontFamily:"var(--font-mono)" }} domain={[0,100]} axisLine={false} tickLine={false} />
-                      <Tooltip contentStyle={{ background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,fontSize:11,fontFamily:"var(--font-mono)" }} cursor={{ fill:"var(--border)",opacity:0.3 }} />
+                      <Tooltip contentStyle={{ background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,fontSize:12,fontFamily:"var(--font-mono)" }} cursor={{ fill:"var(--border)",opacity:0.3 }} />
                       <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize:10, fontFamily:"var(--font-mono)" }} />
                       <Bar dataKey="left" name={left.title.slice(0,20)} fill="var(--gold)" radius={[3,3,0,0]} barSize={24} />
                       <Bar dataKey="right" name={right.title.slice(0,20)} fill="var(--terra)" radius={[3,3,0,0]} barSize={24} opacity={0.8} />
@@ -3529,7 +3581,7 @@ function ComparePage({ activities, profile }: { activities: Activity[]; profile:
                         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                         <XAxis dataKey="split" type="number" tick={{ fontSize:10, fill:"var(--text-muted)", fontFamily:"var(--font-mono)" }} />
                         <YAxis reversed tick={{ fontSize:10, fill:"var(--text-muted)", fontFamily:"var(--font-mono)" }} />
-                        <Tooltip contentStyle={{ background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,fontSize:11,fontFamily:"var(--font-mono)" }} />
+                        <Tooltip contentStyle={{ background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,fontSize:12,fontFamily:"var(--font-mono)" }} />
                         <Line data={(left as any).splits?.map((s:any,i:number)=>({split:i+1,pace:parseFloat((s.moving_time/60/s.distance*1000).toFixed(2))}))} dataKey="pace" name="A" stroke="var(--gold)" strokeWidth={2} dot={false} />
                         <Line data={(right as any).splits?.map((s:any,i:number)=>({split:i+1,pace:parseFloat((s.moving_time/60/s.distance*1000).toFixed(2))}))} dataKey="pace" name="B" stroke="var(--terra)" strokeWidth={2} dot={false} opacity={0.8} />
                       </LineChart>
@@ -3560,11 +3612,11 @@ function ComparePage({ activities, profile }: { activities: Activity[]; profile:
                           <p style={{ fontSize:10,color,fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:10 }}>{ai===0?"Activity A":"Activity B"} — Avg {hr} bpm</p>
                           {zones.map(z=>(
                             <div key={z.name} style={{ display:"flex",alignItems:"center",gap:8,marginBottom:6 }}>
-                              <span style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",width:20 }}>{z.name}</span>
+                              <span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",width:20 }}>{z.name}</span>
                               <div style={{ flex:1,height:8,background:"var(--border)",borderRadius:4,overflow:"hidden" }}>
                                 <div style={{ width:`${z.pct}%`,height:"100%",background:z.c,borderRadius:4,transition:"width 0.6s ease" }} />
                               </div>
-                              <span style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)",width:28,textAlign:"right" }}>{z.pct}%</span>
+                              <span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",width:28,textAlign:"right" }}>{z.pct}%</span>
                             </div>
                           ))}
                         </div>
@@ -3584,7 +3636,7 @@ function ComparePage({ activities, profile }: { activities: Activity[]; profile:
                 <p style={{ fontSize:12,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>Splits available for Strava-synced activities.</p>
               ) : (
                 <div style={{ display:"grid",gridTemplateColumns:"auto 1fr 1fr",gap:8,alignItems:"center" }}>
-                  <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>km</p>
+                  <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>km</p>
                   <p style={{ fontSize:10,color:leftColor,fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>A</p>
                   <p style={{ fontSize:10,color:rightColor,fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>B</p>
                   <div style={{ gridColumn:"1/-1",height:1,background:"var(--border)" }} />
@@ -3608,7 +3660,8 @@ function ComparePage({ activities, profile }: { activities: Activity[]; profile:
 // ═══════════════════════════════════════════════════════════════════════════
 // TRAINING PLAN PAGE — AI-generated periodised plan based on goal + CTL
 // ═══════════════════════════════════════════════════════════════════════════
-function TrainPlanPage({ activities, profile, goal }: { activities: Activity[]; profile: Profile | null; goal: GoalData | null }) {
+export function TrainPlanPage({ activities, profile, goal }: { activities: Activity[]; profile: Profile | null; goal: GoalData | null }) {
+  const mob=useIsMobile();
   const [plan, setPlan] = useState<string|null>(null);
   const [loading, setLoading] = useState(false);
   const [weeks, setWeeks] = useState(12);
@@ -3654,7 +3707,7 @@ function TrainPlanPage({ activities, profile, goal }: { activities: Activity[]; 
       {/* Header */}
       <div style={{ display:"flex",alignItems:"center",gap:1,background:"var(--border)",borderRadius:8,overflow:"hidden" }}>
         <div style={{ background:"var(--surface)",padding:"12px 18px",flex:1 }}>
-          <p style={{ fontSize:10,color:"var(--text-subtle)",letterSpacing:"0.16em",textTransform:"uppercase",marginBottom:3,fontFamily:"var(--font-mono)" }}>Intelligence</p>
+          <p style={{ fontSize:11,color:"var(--text-muted)",letterSpacing:"0.16em",textTransform:"uppercase",marginBottom:3,fontFamily:"var(--font-mono)" }}>Intelligence</p>
           <p style={{ fontSize:18,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)",lineHeight:1 }}>Training Plan Generator</p>
         </div>
         {[
@@ -3673,29 +3726,29 @@ function TrainPlanPage({ activities, profile, goal }: { activities: Activity[]; 
       {/* Config */}
       <Card p={18}>
         <SectionTitle mono sub="Customise your plan parameters">Plan Setup</SectionTitle>
-        <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:14 }}>
+        <div style={{ display:"grid",gridTemplateColumns:mob?"1fr":"1fr 1fr",gap:14 }}>
           {/* Goal info */}
           <div style={{ display:"flex",flexDirection:"column",gap:6 }}>
-            <p style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>Goal Race</p>
+            <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>Goal Race</p>
             {goal ? (
               <div style={{ padding:"10px 14px",background:"var(--bg)",border:"1px solid var(--gold)30",borderRadius:6 }}>
                 <p style={{ fontSize:14,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)" }}>{goal.name}</p>
-                <p style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)",marginTop:2 }}>{goal.distance} · {goal.date}{goal.targetTime?` · target ${goal.targetTime}`:""}</p>
+                <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",marginTop:2 }}>{goal.distance} · {goal.date}{goal.targetTime?` · target ${goal.targetTime}`:""}</p>
                 {daysLeft && <p style={{ fontSize:10,color:daysLeft<42?"var(--terra)":"var(--olive)",fontFamily:"var(--font-mono)",marginTop:4 }}>{daysLeft} days out</p>}
               </div>
             ) : (
               <div style={{ padding:"10px 14px",background:"var(--bg)",border:"1px dashed var(--border-hi)",borderRadius:6 }}>
-                <p style={{ fontSize:11,color:"var(--text-subtle)",fontFamily:"var(--font-mono)" }}>No goal set — set one in Races for a targeted plan</p>
+                <p style={{ fontSize:12,color:"var(--text-subtle)",fontFamily:"var(--font-mono)" }}>No goal set — set one in Races for a targeted plan</p>
               </div>
             )}
           </div>
 
           {/* Weeks */}
           <div style={{ display:"flex",flexDirection:"column",gap:6 }}>
-            <p style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>Plan Duration</p>
+            <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>Plan Duration</p>
             <div style={{ display:"flex",gap:4,flexWrap:"wrap" }}>
               {[4,8,12,16,20,24].map(w=>(
-                <button key={w} onClick={()=>setWeeks(w)} style={{ padding:"5px 12px",borderRadius:4,border:`1px solid ${weeks===w?"var(--gold)":"var(--border)"}`,background:weeks===w?"var(--gold-dim)":"transparent",color:weeks===w?"var(--gold)":"var(--text-muted)",fontSize:11,fontFamily:"var(--font-mono)",cursor:"pointer" }}>
+                <button key={w} onClick={()=>setWeeks(w)} style={{ padding:"5px 12px",borderRadius:4,border:`1px solid ${weeks===w?"var(--gold)":"var(--border)"}`,background:weeks===w?"var(--gold-dim)":"transparent",color:weeks===w?"var(--gold)":"var(--text-muted)",fontSize:12,fontFamily:"var(--font-mono)",cursor:"pointer" }}>
                   {w}w
                 </button>
               ))}
@@ -3704,10 +3757,10 @@ function TrainPlanPage({ activities, profile, goal }: { activities: Activity[]; 
 
           {/* Focus */}
           <div style={{ display:"flex",flexDirection:"column",gap:6 }}>
-            <p style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>Training Focus</p>
+            <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>Training Focus</p>
             <div style={{ display:"flex",gap:4,flexWrap:"wrap" }}>
               {(["auto","base","build","peak"] as const).map(f=>(
-                <button key={f} onClick={()=>setFocus(f)} style={{ padding:"5px 12px",borderRadius:4,border:`1px solid ${focus===f?"var(--gold)":"var(--border)"}`,background:focus===f?"var(--gold-dim)":"transparent",color:focus===f?"var(--gold)":"var(--text-muted)",fontSize:11,fontFamily:"var(--font-mono)",cursor:"pointer",textTransform:"capitalize" }}>
+                <button key={f} onClick={()=>setFocus(f)} style={{ padding:"5px 12px",borderRadius:4,border:`1px solid ${focus===f?"var(--gold)":"var(--border)"}`,background:focus===f?"var(--gold-dim)":"transparent",color:focus===f?"var(--gold)":"var(--text-muted)",fontSize:12,fontFamily:"var(--font-mono)",cursor:"pointer",textTransform:"capitalize" }}>
                   {f}
                 </button>
               ))}
@@ -3716,7 +3769,7 @@ function TrainPlanPage({ activities, profile, goal }: { activities: Activity[]; 
 
           {/* Current fitness */}
           <div style={{ display:"flex",flexDirection:"column",gap:6 }}>
-            <p style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>Current Fitness</p>
+            <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>Current Fitness</p>
             <div style={{ padding:"10px 14px",background:"var(--bg)",border:"1px solid var(--border)",borderRadius:6 }}>
               <div style={{ display:"flex",gap:16 }}>
                 {[
@@ -3725,7 +3778,7 @@ function TrainPlanPage({ activities, profile, goal }: { activities: Activity[]; 
                   {l:"TSB",v:tm.tsb,c:tm.tsb>0?"var(--olive)":"var(--terra)"},
                 ].map(x=>(
                   <div key={x.l}>
-                    <p style={{ fontSize:9,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:1 }}>{x.l}</p>
+                    <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:1 }}>{x.l}</p>
                     <p style={{ fontSize:15,fontWeight:300,fontFamily:"var(--font-display)",color:x.c,lineHeight:1 }}>{x.v>0?"+":""}{x.v}</p>
                   </div>
                 ))}
