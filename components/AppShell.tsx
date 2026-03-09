@@ -2414,6 +2414,18 @@ function ActivitiesPage({ activities, profile, onRefresh }: { activities:Activit
 }
 
 // ─── PROFILE ─────────────────────────────────────────────────────────────────
+// Extracted from ProfilePage — must be outside to avoid focus-loss bug
+function ProfileRow({ label, hint, children }: { label:string; hint?:string; children:React.ReactNode }) {
+  return (
+    <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,alignItems:"center",padding:"8px 0",borderBottom:"1px solid var(--border)" }}>
+      <div style={{ display:"flex",alignItems:"center",gap:4 }}>
+        <span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.07em" }}>{label}</span>
+        {hint&&<HintIcon text={hint} />}
+      </div>
+      {children}
+    </div>
+  );
+}
 
 function ProfilePage({ profile, onSaved }: { profile:Profile|null; onSaved:()=>void }) {
   const mob = useIsMobile();
@@ -2456,16 +2468,6 @@ function ProfilePage({ profile, onSaved }: { profile:Profile|null; onSaved:()=>v
   const age  = f.birth_date ? Math.floor((Date.now()-new Date(f.birth_date).getTime())/31557600000) : null;
   const initials = f.full_name ? f.full_name.split(" ").map(n=>n[0]).join("").slice(0,2).toUpperCase() : "AT";
 
-  // Compact inline field — label + input on same row
-  const Row = ({ label, hint, children }: { label:string; hint?:string; children:React.ReactNode }) => (
-    <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,alignItems:"center",padding:"8px 0",borderBottom:"1px solid var(--border)" }}>
-      <div style={{ display:"flex",alignItems:"center",gap:4 }}>
-        <span style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.07em" }}>{label}</span>
-        {hint&&<HintIcon text={hint} />}
-      </div>
-      {children}
-    </div>
-  );
 
   // Zone table compact
   const ZoneTable = ({ zones }: { zones:{z:string;n:string;val:string;color:string}[] }) => (
@@ -2552,28 +2554,28 @@ function ProfilePage({ profile, onSaved }: { profile:Profile|null; onSaved:()=>v
           <Card p={16}>
             <p style={{ fontSize:11,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.14em",fontFamily:"var(--font-mono)",marginBottom:10 }}>Personal</p>
             <div>
-              <Row label="Name"><Input value={f.full_name} onChange={s("full_name")} placeholder="Carlos Almeida" /></Row>
-              <Row label="Born"><Input type="date" value={f.birth_date} onChange={s("birth_date")} /></Row>
-              <Row label="Weight" hint="Used for W/kg and fueling calculations"><Input value={f.weight_kg} onChange={s("weight_kg")} placeholder="72 kg" /></Row>
-              <Row label="Height"><Input value={f.height_cm} onChange={s("height_cm")} placeholder="178 cm" /></Row>
-              <Row label="Sport">
+              <ProfileRow label="Name"><Input value={f.full_name} onChange={s("full_name")} placeholder="Carlos Almeida" /></ProfileRow>
+              <ProfileRow label="Born"><Input type="date" value={f.birth_date} onChange={s("birth_date")} /></ProfileRow>
+              <ProfileRow label="Weight" hint="Used for W/kg and fueling calculations"><Input value={f.weight_kg} onChange={s("weight_kg")} placeholder="72 kg" /></ProfileRow>
+              <ProfileRow label="Height"><Input value={f.height_cm} onChange={s("height_cm")} placeholder="178 cm" /></ProfileRow>
+              <ProfileRow label="Sport">
                 <Sel value={f.sport} onChange={s("sport")} options={["running","cycling","swimming","triathlon","strength"]} />
-              </Row>
+              </ProfileRow>
             </div>
           </Card>
 
           <Card p={16}>
             <p style={{ fontSize:11,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.14em",fontFamily:"var(--font-mono)",marginBottom:10 }}>Performance thresholds</p>
             <div>
-              <Row label="FTP" hint="Functional Threshold Power — max 1h average power. Powers TSS, IF and all cycling zones.">
+              <ProfileRow label="FTP" hint="Functional Threshold Power — max 1h average power. Powers TSS, IF and all cycling zones.">
                 <Input value={f.ftp_watts} onChange={s("ftp_watts")} placeholder="280 W" />
-              </Row>
-              <Row label="LTHR" hint="Lactate Threshold Heart Rate (Friel model). Used for HR zone distribution in activity analysis.">
+              </ProfileRow>
+              <ProfileRow label="LTHR" hint="Lactate Threshold Heart Rate (Friel model). Used for HR zone distribution in activity analysis.">
                 <Input value={f.lthr} onChange={s("lthr")} placeholder="168 bpm" />
-              </Row>
-              <Row label="VDOT" hint="Jack Daniels aerobic index from race times. Determines E / M / T / I / R training paces.">
+              </ProfileRow>
+              <ProfileRow label="VDOT" hint="Jack Daniels aerobic index from race times. Determines E / M / T / I / R training paces.">
                 <Input value={f.vdot} onChange={s("vdot")} placeholder="52.5" />
-              </Row>
+              </ProfileRow>
             </div>
           </Card>
         </div>
