@@ -63,7 +63,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   LineChart, Line, AreaChart, Area, BarChart, Bar, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine,
+  XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, Legend,
   ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis,
 } from "recharts";
 import { createClient } from "@/lib/supabase/client";
@@ -197,6 +197,39 @@ function IconSignOut({ size=13 }: { size?:number }) {
       <path d="M9,4 L9,2 L2,2 L2,12 L9,12 L9,10" />
       <polyline points="6,7 12,7" />
       <polyline points="10,5 12,7 10,9" />
+    </svg>
+  );
+}
+
+function IconPlan({ size=16, active=false }: { size?:number; active?:boolean }) {
+  const s = active?"var(--gold)":"currentColor";
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={s} strokeWidth="1">
+      <rect x="1.5" y="2" width="13" height="12" rx="1.5" />
+      <line x1="5" y1="6" x2="11" y2="6" />
+      <line x1="5" y1="9" x2="11" y2="9" />
+      <line x1="5" y1="12" x2="8" y2="12" />
+      <polyline points="10,10 11.5,11.5 14,8" stroke={active?"var(--gold)":"currentColor"} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+function IconCompare({ size=16, active=false }: { size?:number; active?:boolean }) {
+  const s = active?"var(--gold)":"currentColor";
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={s} strokeWidth="1">
+      <line x1="8" y1="1" x2="8" y2="15" strokeDasharray="2 1.5" />
+      <polyline points="1,12 3,8 5,10 7,5" strokeLinecap="round" strokeLinejoin="round"/>
+      <polyline points="9,11 11,7 13,9 15,4" stroke={active?"var(--gold)":"currentColor"} strokeLinecap="round" strokeLinejoin="round" strokeOpacity="0.6"/>
+    </svg>
+  );
+}
+
+function IconRecords({ size=16, active=false }: { size?:number; active?:boolean }) {
+  const s = active?"var(--gold)":"currentColor";
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke={s} strokeWidth="1">
+      <polygon points="8,1 10,6 15,6 11,9.5 12.5,14.5 8,11.5 3.5,14.5 5,9.5 1,6 6,6" fill={active?"var(--gold)":"none"} fillOpacity="0.15" strokeLinejoin="round"/>
     </svg>
   );
 }
@@ -2807,7 +2840,7 @@ function SyncPage({ onRefresh }: { onRefresh: () => void }) {
 
 // ─── SIDEBAR ─────────────────────────────────────────────────────────────────
 
-type PageId="dashboard"|"coach"|"fueling"|"analysis"|"races"|"activities"|"sync"|"profile";
+type PageId="dashboard"|"coach"|"fueling"|"analysis"|"races"|"activities"|"sync"|"profile"|"plan"|"compare"|"records";
 
 const NAV=[
   {id:"dashboard" as PageId, label:"Dashboard",  Icon:IconDashboard,  sublabel:"Home"},
@@ -2816,6 +2849,9 @@ const NAV=[
   {id:"analysis"  as PageId, label:"Analysis",   Icon:IconAnalysis,  sublabel:"Stats"},
   {id:"races"     as PageId, label:"Races",      Icon:IconRaces,     sublabel:"Races"},
   {id:"activities"as PageId, label:"Activities", Icon:IconActivities,sublabel:"Log"},
+  {id:"plan"      as PageId, label:"Train Plan",  Icon:IconPlan,      sublabel:"Plan"},
+  {id:"compare"   as PageId, label:"Compare",    Icon:IconCompare,   sublabel:"Vs"},
+  {id:"records"   as PageId, label:"Records",    Icon:IconRecords,   sublabel:"PRs"},
   {id:"sync"      as PageId, label:"Sync",       Icon:IconSync,      sublabel:"Sync"},
 ];
 
@@ -3060,10 +3096,673 @@ export function AppShell() {
               case "activities": return <ActivitiesPage activities={activities} profile={profile} onRefresh={load} />;
               case "sync":       return <SyncPage onRefresh={load} />;
               case "profile":    return <ProfilePage profile={profile} onSaved={load} />;
+              case "plan":       return <TrainPlanPage activities={activities} profile={profile} goal={goal} />;
+              case "compare":    return <ComparePage activities={activities} profile={profile} />;
+              case "records":    return <RecordsPage activities={activities} profile={profile} />;
             }
           })()}
         </div>
       </main>
+    </div>
+  );
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RECORDS PAGE — Personal Best detection across all distances
+// ═══════════════════════════════════════════════════════════════════════════
+const PR_DISTANCES = [
+  { label:"1 km",    meters:1000,   sport:"running" },
+  { label:"5 km",    meters:5000,   sport:"running" },
+  { label:"10 km",   meters:10000,  sport:"running" },
+  { label:"Half",    meters:21097,  sport:"running" },
+  { label:"Marathon",meters:42195,  sport:"running" },
+  { label:"20 km",   meters:20000,  sport:"cycling" },
+  { label:"40 km",   meters:40000,  sport:"cycling" },
+  { label:"100 km",  meters:100000, sport:"cycling" },
+  { label:"100 m",   meters:100,    sport:"swimming" },
+  { label:"400 m",   meters:400,    sport:"swimming" },
+  { label:"1500 m",  meters:1500,   sport:"swimming" },
+];
+
+function getBestForDistance(acts: Activity[], distMeters: number, sport: string, tolerance=0.06) {
+  const candidates = acts.filter(a =>
+    a.sport === sport &&
+    a.distance_meters != null &&
+    a.duration_seconds != null &&
+    Math.abs((a.distance_meters - distMeters) / distMeters) <= tolerance
+  );
+  if (!candidates.length) return null;
+  // Best = fastest pace (lowest sec/km normalized to exact distance)
+  return candidates.reduce((best, a) => {
+    const normSec = (a.duration_seconds! / a.distance_meters!) * distMeters;
+    const bestNorm = (best.duration_seconds! / best.distance_meters!) * distMeters;
+    return normSec < bestNorm ? a : best;
+  });
+}
+
+function RecordsPage({ activities, profile }: { activities: Activity[]; profile: Profile | null }) {
+  const [sport, setSport] = useState<"all"|"running"|"cycling"|"swimming">("running");
+  const [detail, setDetail] = useState<Activity|null>(null);
+
+  const sports = ["running","cycling","swimming"] as const;
+  const filtered = PR_DISTANCES.filter(d => sport === "all" || d.sport === sport);
+
+  // Build records
+  const records = filtered.map(d => {
+    const best = getBestForDistance(activities, d.meters, d.sport);
+    if (!best) return { ...d, best: null, normSec: null, prevBest: null };
+    // Find 2nd best (different activity)
+    const others = activities.filter(a =>
+      a.sport === d.sport &&
+      a.distance_meters != null &&
+      a.duration_seconds != null &&
+      Math.abs((a.distance_meters - d.meters) / d.meters) <= 0.06 &&
+      a.id !== best.id
+    );
+    const prevBest = others.length ? others.reduce((b, a) => {
+      const norm = (a.duration_seconds! / a.distance_meters!) * d.meters;
+      const bn = (b.duration_seconds! / b.distance_meters!) * d.meters;
+      return norm < bn ? a : b;
+    }) : null;
+    const normSec = (best.duration_seconds! / best.distance_meters!) * d.meters;
+    const prevNormSec = prevBest ? (prevBest.duration_seconds! / prevBest.distance_meters!) * d.meters : null;
+    return { ...d, best, normSec, prevBest, prevNormSec };
+  }).filter(r => r.best != null);
+
+  // Stats
+  const totalPRs = records.length;
+  const recentPR = records.filter(r => r.best && Math.floor((Date.now() - new Date(r.best.date).getTime())/86400000) <= 90).length;
+
+  return (
+    <div style={{ display:"flex",flexDirection:"column",gap:14 }} className="fade-up">
+      {detail && <ActivityDetailModal act={detail} profile={profile} onClose={()=>setDetail(null)} onEdit={()=>{}} onDelete={()=>{}} />}
+
+      {/* Header */}
+      <div style={{ display:"flex",alignItems:"center",gap:1,background:"var(--border)",borderRadius:8,overflow:"hidden" }}>
+        <div style={{ background:"var(--surface)",padding:"12px 18px",flex:1 }}>
+          <p style={{ fontSize:10,color:"var(--text-subtle)",letterSpacing:"0.16em",textTransform:"uppercase",marginBottom:3,fontFamily:"var(--font-mono)" }}>Performance</p>
+          <p style={{ fontSize:18,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)",lineHeight:1 }}>Personal Records</p>
+        </div>
+        {[
+          {label:"Total PRs", value:String(totalPRs), accent:"var(--gold)"},
+          {label:"Last 90d",  value:String(recentPR), accent:"var(--olive)"},
+          {label:"Athletes",  value:"1",              accent:"var(--terra)"},
+        ].map((m,i)=>(
+          <div key={i} style={{ background:"var(--surface)",padding:"12px 18px",position:"relative",borderLeft:"1px solid var(--border)" }}>
+            <div style={{ position:"absolute",top:0,left:0,right:0,height:2,background:m.accent }} />
+            <p style={{ fontSize:10,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4,fontFamily:"var(--font-mono)" }}>{m.label}</p>
+            <p style={{ fontSize:18,fontWeight:300,fontFamily:"var(--font-display)",color:"var(--text)",lineHeight:1 }}>{m.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Sport filter */}
+      <div style={{ display:"flex",gap:4 }}>
+        {(["running","cycling","swimming"] as const).map(s=>(
+          <button key={s} onClick={()=>setSport(s)} style={{ padding:"5px 14px",borderRadius:4,border:`1px solid ${sport===s?"var(--gold)":"var(--border)"}`,background:sport===s?"var(--gold-dim)":"transparent",color:sport===s?"var(--gold)":"var(--text-muted)",fontSize:11,fontFamily:"var(--font-mono)",cursor:"pointer",textTransform:"capitalize" }}>
+            {s}
+          </button>
+        ))}
+      </div>
+
+      {records.length === 0 ? (
+        <Card style={{ textAlign:"center" }} p={52}><EmptyState label="Log activities to track personal records" /></Card>
+      ) : (
+        <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
+          {records.map((r,i) => {
+            if (!r.best || !r.normSec) return null;
+            const pace = r.sport === "running" ? fmtPace(r.normSec / (r.meters/1000)) : null;
+            const speed = r.sport === "cycling" ? `${((r.meters / r.normSec) * 3.6).toFixed(1)} km/h` : null;
+            const swimPace = r.sport === "swimming" ? fmtPace((r.normSec / r.meters) * 100) + "/100m" : null;
+            const displayVal = pace ?? speed ?? swimPace ?? fmtDuration(r.normSec);
+            const prevVal = r.prevNormSec ? (r.sport==="running" ? fmtPace(r.prevNormSec/(r.meters/1000)) : r.sport==="cycling" ? `${((r.meters/r.prevNormSec)*3.6).toFixed(1)}` : fmtPace((r.prevNormSec/r.meters)*100)+"/100m") : null;
+            const improvement = r.prevNormSec ? Math.round(((r.prevNormSec - r.normSec) / r.prevNormSec) * 100 * 10) / 10 : null;
+            const isRecent = Math.floor((Date.now()-new Date(r.best.date).getTime())/86400000) <= 90;
+            const sportColor = r.sport==="running"?"var(--gold)":r.sport==="cycling"?"var(--olive)":"var(--terra)";
+
+            return (
+              <div key={i} style={{ cursor:"pointer" }} onClick={()=>setDetail(r.best!)}>
+              <Card p={0} style={{ overflow:"hidden" }}>
+                <div style={{ display:"grid",gridTemplateColumns:"3px 1fr",height:"100%" }}>
+                  <div style={{ background:isRecent?"var(--gold)":sportColor+"40" }} />
+                  <div style={{ padding:"12px 16px",display:"flex",alignItems:"center",gap:16,flexWrap:"wrap" }}>
+                    {/* Distance badge */}
+                    <div style={{ minWidth:70 }}>
+                      <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:2 }}>{r.sport}</p>
+                      <p style={{ fontSize:15,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)",lineHeight:1 }}>{r.label}</p>
+                    </div>
+                    {/* PR value — big */}
+                    <div style={{ flex:1 }}>
+                      <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:2 }}>PR {r.sport==="running"?"pace":r.sport==="cycling"?"speed":"pace"}</p>
+                      <p style={{ fontSize:22,fontWeight:300,fontFamily:"var(--font-display)",color:isRecent?"var(--gold)":"var(--text)",lineHeight:1 }}>{displayVal}</p>
+                    </div>
+                    {/* Time */}
+                    <div>
+                      <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:2 }}>Time</p>
+                      <p style={{ fontSize:14,fontWeight:300,fontFamily:"var(--font-display)",color:"var(--text)",lineHeight:1 }}>{fmtDuration(r.normSec)}</p>
+                    </div>
+                    {/* HR */}
+                    {r.best.avg_heart_rate && (
+                      <div>
+                        <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:2 }}>Avg HR</p>
+                        <p style={{ fontSize:14,fontWeight:300,fontFamily:"var(--font-display)",color:"var(--terra)",lineHeight:1 }}>{r.best.avg_heart_rate} bpm</p>
+                      </div>
+                    )}
+                    {/* vs prev */}
+                    {prevVal && improvement !== null && (
+                      <div>
+                        <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:2 }}>vs Prev</p>
+                        <p style={{ fontSize:13,fontFamily:"var(--font-mono)",color:improvement>0?"var(--olive)":"var(--terra)",lineHeight:1 }}>
+                          {improvement>0?`↑ ${improvement}%`:`↓ ${Math.abs(improvement)}%`}
+                        </p>
+                      </div>
+                    )}
+                    {/* Date + badge */}
+                    <div style={{ textAlign:"right" }}>
+                      <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",marginBottom:4 }}>{r.best.date}</p>
+                      {isRecent && <span style={{ fontSize:9,color:"var(--gold)",fontFamily:"var(--font-mono)",background:"var(--gold-dim)",border:"1px solid var(--gold)30",borderRadius:3,padding:"2px 6px",letterSpacing:"0.06em" }}>NEW ★</span>}
+                    </div>
+                  </div>
+                </div>
+              </Card>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// COMPARE PAGE — Side-by-side race/activity deep comparison
+// ═══════════════════════════════════════════════════════════════════════════
+function ComparePage({ activities, profile }: { activities: Activity[]; profile: Profile | null }) {
+  const [leftId, setLeftId] = useState<string>("");
+  const [rightId, setRightId] = useState<string>("");
+  const [tab, setTab] = useState<"overview"|"charts"|"splits">("overview");
+
+  const left = activities.find(a => a.id === leftId) ?? null;
+  const right = activities.find(a => a.id === rightId) ?? null;
+
+  const selectStyle: React.CSSProperties = {
+    width:"100%", padding:"9px 12px", background:"var(--bg)", border:"1px solid var(--border)",
+    borderRadius:6, color:"var(--text)", fontFamily:"var(--font-mono)", fontSize:11,
+    cursor:"pointer", outline:"none",
+  };
+
+  // Build comparison metrics
+  function metricDiff(a: number|null, b: number|null, lowerIsBetter=false) {
+    if (!a || !b) return null;
+    const pct = ((a - b) / b) * 100;
+    const better = lowerIsBetter ? pct < 0 : pct > 0;
+    return { pct: Math.abs(Math.round(pct * 10)/10), better, aWins: better };
+  }
+
+  const metrics: Array<{label:string; leftVal:string; rightVal:string; diff:ReturnType<typeof metricDiff>; unit?:string}> = left && right ? [
+    {
+      label:"Distance",
+      leftVal: fmtDist(left.distance_meters, left.sport),
+      rightVal: fmtDist(right.distance_meters, right.sport),
+      diff: metricDiff(left.distance_meters, right.distance_meters),
+    },
+    {
+      label:"Duration",
+      leftVal: fmtDuration(left.duration_seconds),
+      rightVal: fmtDuration(right.duration_seconds),
+      diff: metricDiff(left.duration_seconds, right.duration_seconds, true),
+    },
+    ...(left.avg_pace_sec_km && right.avg_pace_sec_km ? [{
+      label:"Avg Pace",
+      leftVal: fmtPace(left.avg_pace_sec_km),
+      rightVal: fmtPace(right.avg_pace_sec_km),
+      diff: metricDiff(left.avg_pace_sec_km, right.avg_pace_sec_km, true),
+      unit:"/km",
+    }] : []),
+    ...(left.avg_heart_rate && right.avg_heart_rate ? [{
+      label:"Avg HR",
+      leftVal: `${left.avg_heart_rate} bpm`,
+      rightVal: `${right.avg_heart_rate} bpm`,
+      diff: metricDiff(left.avg_heart_rate, right.avg_heart_rate, true),
+    }] : []),
+    ...(left.tss && right.tss ? [{
+      label:"TSS",
+      leftVal: String(left.tss),
+      rightVal: String(right.tss),
+      diff: metricDiff(left.tss, right.tss, true),
+    }] : []),
+    ...(left.elevation_gain && right.elevation_gain ? [{
+      label:"Elevation",
+      leftVal: `${left.elevation_gain} m`,
+      rightVal: `${right.elevation_gain} m`,
+      diff: metricDiff(left.elevation_gain, right.elevation_gain),
+    }] : []),
+    ...(left.avg_power_watts && right.avg_power_watts ? [{
+      label:"Avg Power",
+      leftVal: `${left.avg_power_watts} W`,
+      rightVal: `${right.avg_power_watts} W`,
+      diff: metricDiff(left.avg_power_watts, right.avg_power_watts),
+    }] : []),
+    ...(left.normalized_power && right.normalized_power ? [{
+      label:"NP",
+      leftVal: `${left.normalized_power} W`,
+      rightVal: `${right.normalized_power} W`,
+      diff: metricDiff(left.normalized_power, right.normalized_power),
+    }] : []),
+    ...(left.calories && right.calories ? [{
+      label:"Calories",
+      leftVal: `${left.calories} kcal`,
+      rightVal: `${right.calories} kcal`,
+      diff: metricDiff(left.calories, right.calories),
+    }] : []),
+    ...(left.feel_score && right.feel_score ? [{
+      label:"Feel",
+      leftVal: `★ ${left.feel_score}/10`,
+      rightVal: `★ ${right.feel_score}/10`,
+      diff: metricDiff(left.feel_score, right.feel_score),
+    }] : []),
+    ...(left.intensity_factor && right.intensity_factor ? [{
+      label:"Int. Factor",
+      leftVal: left.intensity_factor.toFixed(2),
+      rightVal: right.intensity_factor.toFixed(2),
+      diff: metricDiff(left.intensity_factor, right.intensity_factor),
+    }] : []),
+    ...(left.variability_index && right.variability_index ? [{
+      label:"Variability Idx",
+      leftVal: left.variability_index.toFixed(2),
+      rightVal: right.variability_index.toFixed(2),
+      diff: metricDiff(left.variability_index, right.variability_index, true),
+    }] : []),
+  ] : [];
+
+  // Efficiency: power/HR ratio
+  const leftEff = left?.avg_power_watts && left?.avg_heart_rate
+    ? Math.round((left.avg_power_watts/left.avg_heart_rate)*100)/100 : null;
+  const rightEff = right?.avg_power_watts && right?.avg_heart_rate
+    ? Math.round((right.avg_power_watts/right.avg_heart_rate)*100)/100 : null;
+  if (leftEff && rightEff) {
+    metrics.push({
+      label:"Efficiency (W/bpm)",
+      leftVal: String(leftEff),
+      rightVal: String(rightEff),
+      diff: metricDiff(leftEff, rightEff),
+    });
+  }
+
+  // Aerobic decoupling: pa:hr drift
+  const leftDec = left?.elapsed_seconds && left?.duration_seconds && left?.elapsed_seconds > left.duration_seconds
+    ? Math.round(((left.elapsed_seconds - left.duration_seconds)/left.elapsed_seconds)*100) : null;
+  const rightDec = right?.elapsed_seconds && right?.duration_seconds && right?.elapsed_seconds > right.duration_seconds
+    ? Math.round(((right.elapsed_seconds - right.duration_seconds)/right.elapsed_seconds)*100) : null;
+  if (leftDec !== null && rightDec !== null) {
+    metrics.push({
+      label:"Coasting %",
+      leftVal: `${leftDec}%`,
+      rightVal: `${rightDec}%`,
+      diff: metricDiff(leftDec, rightDec, true),
+    });
+  }
+
+  // Chart data: bar chart of key metrics normalised 0-100
+  const chartData = left && right ? [
+    { metric:"Pace",    left: left.avg_pace_sec_km ? Math.max(0,100-Math.round((left.avg_pace_sec_km-180)/2)) : 0,
+                        right: right.avg_pace_sec_km ? Math.max(0,100-Math.round((right.avg_pace_sec_km-180)/2)) : 0 },
+    { metric:"HR",      left: left.avg_heart_rate ? Math.round(left.avg_heart_rate/2) : 0,
+                        right: right.avg_heart_rate ? Math.round(right.avg_heart_rate/2) : 0 },
+    { metric:"TSS",     left: Math.min(100, left.tss??0), right: Math.min(100, right.tss??0) },
+    { metric:"Elev",    left: Math.min(100, Math.round((left.elevation_gain??0)/20)), right: Math.min(100, Math.round((right.elevation_gain??0)/20)) },
+    { metric:"Feel",    left: ((left.feel_score??5)/10)*100, right: ((right.feel_score??5)/10)*100 },
+    { metric:"Power",   left: Math.min(100,Math.round((left.avg_power_watts??0)/4)), right: Math.min(100,Math.round((right.avg_power_watts??0)/4)) },
+  ] : [];
+
+  const leftColor = "var(--gold)";
+  const rightColor = "var(--terra)";
+
+  return (
+    <div style={{ display:"flex",flexDirection:"column",gap:14 }} className="fade-up">
+      {/* Header */}
+      <div style={{ display:"flex",alignItems:"center",gap:1,background:"var(--border)",borderRadius:8,overflow:"hidden" }}>
+        <div style={{ background:"var(--surface)",padding:"12px 18px",flex:1 }}>
+          <p style={{ fontSize:10,color:"var(--text-subtle)",letterSpacing:"0.16em",textTransform:"uppercase",marginBottom:3,fontFamily:"var(--font-mono)" }}>Analysis</p>
+          <p style={{ fontSize:18,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)",lineHeight:1 }}>Race Comparator</p>
+        </div>
+        <div style={{ background:"var(--surface)",padding:"12px 18px",borderLeft:"1px solid var(--border)" }}>
+          <p style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4 }}>Metrics</p>
+          <p style={{ fontSize:18,fontWeight:300,fontFamily:"var(--font-display)",color:"var(--text)" }}>{metrics.length}</p>
+        </div>
+      </div>
+
+      {/* Selector row */}
+      <div style={{ display:"grid",gridTemplateColumns:"1fr 40px 1fr",gap:8,alignItems:"center" }}>
+        <div>
+          <p style={{ fontSize:10,color:leftColor,fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6,borderBottom:`2px solid ${leftColor}`,paddingBottom:4 }}>Activity A</p>
+          <select value={leftId} onChange={e=>setLeftId(e.target.value)} style={selectStyle}>
+            <option value="">— select —</option>
+            {activities.map(a=>(
+              <option key={a.id} value={a.id}>{a.date} · {a.title} ({fmtDist(a.distance_meters,a.sport)})</option>
+            ))}
+          </select>
+        </div>
+        <div style={{ textAlign:"center",color:"var(--text-subtle)",fontFamily:"var(--font-mono)",fontSize:14,fontWeight:300 }}>vs</div>
+        <div>
+          <p style={{ fontSize:10,color:rightColor,fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6,borderBottom:`2px solid ${rightColor}`,paddingBottom:4 }}>Activity B</p>
+          <select value={rightId} onChange={e=>setRightId(e.target.value)} style={selectStyle}>
+            <option value="">— select —</option>
+            {activities.map(a=>(
+              <option key={a.id} value={a.id}>{a.date} · {a.title} ({fmtDist(a.distance_meters,a.sport)})</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {left && right && (
+        <>
+          {/* Activity title cards */}
+          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
+            {([left, right] as const).map((act,i)=>(
+              <Card key={i} p={14} style={{ borderTop:`2px solid ${i===0?leftColor:rightColor}` }}>
+                <p style={{ fontSize:11,fontWeight:500,color:"var(--text)",fontFamily:"var(--font-display)",fontStyle:"italic",marginBottom:4 }}>{act.title}</p>
+                <p style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{act.date} · {act.sport} · {act.type}</p>
+                <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",marginTop:3 }}>{fmtDist(act.distance_meters,act.sport)} · {fmtDuration(act.duration_seconds)}</p>
+              </Card>
+            ))}
+          </div>
+
+          {/* Tabs */}
+          <div style={{ display:"flex",gap:1,background:"var(--border)",borderRadius:6,padding:2,width:"fit-content" }}>
+            {(["overview","charts","splits"] as const).map(t=>(
+              <button key={t} onClick={()=>setTab(t)} style={{ padding:"5px 16px",borderRadius:4,border:"none",background:tab===t?"var(--surface)":"transparent",color:tab===t?"var(--text)":"var(--text-muted)",fontSize:11,cursor:"pointer",fontFamily:"var(--font-mono)",letterSpacing:"0.04em",textTransform:"capitalize" }}>{t}</button>
+            ))}
+          </div>
+
+          {/* Overview tab — metrics table */}
+          {tab==="overview" && (
+            <Card p={0}>
+              <div style={{ padding:"10px 16px",borderBottom:"1px solid var(--border)",display:"grid",gridTemplateColumns:"1fr 1fr 1fr 80px",gap:8,alignItems:"center" }}>
+                <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>Metric</p>
+                <p style={{ fontSize:10,color:leftColor,fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>A</p>
+                <p style={{ fontSize:10,color:rightColor,fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>B</p>
+                <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",textAlign:"right" }}>Δ</p>
+              </div>
+              {metrics.map((m,i)=>(
+                <div key={i} style={{ padding:"9px 16px",borderBottom:i<metrics.length-1?"1px solid var(--border)":undefined,display:"grid",gridTemplateColumns:"1fr 1fr 1fr 80px",gap:8,alignItems:"center",background:i%2===0?"transparent":"var(--surface-hi, var(--bg))20" }}>
+                  <p style={{ fontSize:11,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>{m.label}</p>
+                  <p style={{ fontSize:13,fontWeight:300,fontFamily:"var(--font-display)",color:m.diff?.aWins?"var(--gold)":"var(--text)" }}>{m.leftVal}</p>
+                  <p style={{ fontSize:13,fontWeight:300,fontFamily:"var(--font-display)",color:m.diff&&!m.diff.aWins?"var(--gold)":"var(--text)" }}>{m.rightVal}</p>
+                  <p style={{ fontSize:11,fontFamily:"var(--font-mono)",color:m.diff?.better?"var(--olive)":"var(--terra)",textAlign:"right" }}>
+                    {m.diff ? `${m.diff.pct}%` : "—"}
+                  </p>
+                </div>
+              ))}
+            </Card>
+          )}
+
+          {/* Charts tab */}
+          {tab==="charts" && (
+            <div style={{ display:"flex",flexDirection:"column",gap:14 }}>
+              {/* Radar-style bar comparison */}
+              <Card p={20}>
+                <SectionTitle mono sub="Normalised 0-100 per metric">Key Metrics Comparison</SectionTitle>
+                <div style={{ height:240 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData} barCategoryGap="30%">
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                      <XAxis dataKey="metric" tick={{ fontSize:10, fill:"var(--text-muted)", fontFamily:"var(--font-mono)" }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fontSize:10, fill:"var(--text-muted)", fontFamily:"var(--font-mono)" }} domain={[0,100]} axisLine={false} tickLine={false} />
+                      <Tooltip contentStyle={{ background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,fontSize:11,fontFamily:"var(--font-mono)" }} cursor={{ fill:"var(--border)",opacity:0.3 }} />
+                      <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize:10, fontFamily:"var(--font-mono)" }} />
+                      <Bar dataKey="left" name={left.title.slice(0,20)} fill="var(--gold)" radius={[3,3,0,0]} barSize={24} />
+                      <Bar dataKey="right" name={right.title.slice(0,20)} fill="var(--terra)" radius={[3,3,0,0]} barSize={24} opacity={0.8} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </Card>
+
+              {/* Pace/HR timeline if we have splits */}
+              {(left as any).splits && (right as any).splits && (
+                <Card p={20}>
+                  <SectionTitle mono sub="Km-by-km split overlay">Pace Overlay</SectionTitle>
+                  <div style={{ height:220 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart>
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                        <XAxis dataKey="split" type="number" tick={{ fontSize:10, fill:"var(--text-muted)", fontFamily:"var(--font-mono)" }} />
+                        <YAxis reversed tick={{ fontSize:10, fill:"var(--text-muted)", fontFamily:"var(--font-mono)" }} />
+                        <Tooltip contentStyle={{ background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,fontSize:11,fontFamily:"var(--font-mono)" }} />
+                        <Line data={(left as any).splits?.map((s:any,i:number)=>({split:i+1,pace:parseFloat((s.moving_time/60/s.distance*1000).toFixed(2))}))} dataKey="pace" name="A" stroke="var(--gold)" strokeWidth={2} dot={false} />
+                        <Line data={(right as any).splits?.map((s:any,i:number)=>({split:i+1,pace:parseFloat((s.moving_time/60/s.distance*1000).toFixed(2))}))} dataKey="pace" name="B" stroke="var(--terra)" strokeWidth={2} dot={false} opacity={0.8} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </Card>
+              )}
+
+              {/* HR distribution comparison */}
+              {left.avg_heart_rate && right.avg_heart_rate && (
+                <Card p={20}>
+                  <SectionTitle mono sub="Estimated zone distribution">Heart Rate Profile</SectionTitle>
+                  <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:16 }}>
+                    {([left,right] as const).map((act,ai)=>{
+                      const color = ai===0?leftColor:rightColor;
+                      const hr=act.avg_heart_rate!;
+                      const max=act.max_heart_rate??190;
+                      const pct=Math.round((hr/max)*100);
+                      const zones=[
+                        {name:"Z1",pct:pct<60?30:10,c:"var(--text-subtle)"},
+                        {name:"Z2",pct:pct<70?40:20,c:"var(--olive)"},
+                        {name:"Z3",pct:pct<80?20:30,c:"var(--gold)"},
+                        {name:"Z4",pct:pct<90?8:30,c:"var(--terra)"},
+                        {name:"Z5",pct:pct>=90?20:2,c:"#c0392b"},
+                      ];
+                      return (
+                        <div key={ai}>
+                          <p style={{ fontSize:10,color,fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:10 }}>{ai===0?"Activity A":"Activity B"} — Avg {hr} bpm</p>
+                          {zones.map(z=>(
+                            <div key={z.name} style={{ display:"flex",alignItems:"center",gap:8,marginBottom:6 }}>
+                              <span style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",width:20 }}>{z.name}</span>
+                              <div style={{ flex:1,height:8,background:"var(--border)",borderRadius:4,overflow:"hidden" }}>
+                                <div style={{ width:`${z.pct}%`,height:"100%",background:z.c,borderRadius:4,transition:"width 0.6s ease" }} />
+                              </div>
+                              <span style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)",width:28,textAlign:"right" }}>{z.pct}%</span>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Card>
+              )}
+            </div>
+          )}
+
+          {/* Splits tab */}
+          {tab==="splits" && (
+            <Card p={20}>
+              <SectionTitle mono sub="Per-km breakdown">Splits Comparison</SectionTitle>
+              {(left as any).splits || (right as any).splits ? (
+                <p style={{ fontSize:12,color:"var(--text-muted)",fontFamily:"var(--font-mono)" }}>Splits available for Strava-synced activities.</p>
+              ) : (
+                <div style={{ display:"grid",gridTemplateColumns:"auto 1fr 1fr",gap:8,alignItems:"center" }}>
+                  <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>km</p>
+                  <p style={{ fontSize:10,color:leftColor,fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>A</p>
+                  <p style={{ fontSize:10,color:rightColor,fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>B</p>
+                  <div style={{ gridColumn:"1/-1",height:1,background:"var(--border)" }} />
+                  <p style={{ fontSize:12,color:"var(--text-muted)",fontFamily:"var(--font-mono)",gridColumn:"1/-1",paddingTop:8 }}>Sync with Strava to get km-by-km splits.</p>
+                </div>
+              )}
+            </Card>
+          )}
+        </>
+      )}
+
+      {(!left || !right) && (
+        <Card style={{ textAlign:"center" }} p={52}>
+          <EmptyState label="Select two activities above to compare them in detail" />
+        </Card>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TRAINING PLAN PAGE — AI-generated periodised plan based on goal + CTL
+// ═══════════════════════════════════════════════════════════════════════════
+function TrainPlanPage({ activities, profile, goal }: { activities: Activity[]; profile: Profile | null; goal: GoalData | null }) {
+  const [plan, setPlan] = useState<string|null>(null);
+  const [loading, setLoading] = useState(false);
+  const [weeks, setWeeks] = useState(12);
+  const [focus, setFocus] = useState<"base"|"build"|"peak"|"auto">("auto");
+  const [generated, setGenerated] = useState(false);
+
+  const tm = calcTM(activities);
+  const daysLeft = goal?.date ? Math.ceil((new Date(goal.date).getTime()-Date.now())/86400000) : null;
+  const weeksLeft = daysLeft ? Math.floor(daysLeft/7) : null;
+
+  const generate = async () => {
+    setLoading(true);
+    setPlan(null);
+    try {
+      const ctx = {
+        ctl: tm.ctl, atl: tm.atl, tsb: tm.tsb,
+        sport: profile?.sport ?? "running",
+        ftp: profile?.ftp_watts ?? null,
+        lthr: profile?.lthr ?? null,
+        vdot: profile?.vdot ?? null,
+        weeks,
+        focus,
+        goal: goal ? { name: goal.name, distance: goal.distance, date: goal.date, target: goal.targetTime, daysLeft } : null,
+        recentTSS: activities.slice(0,4).map(a=>a.tss??0),
+      };
+      const res = await fetch("/api/ai/plan", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify(ctx),
+      });
+      const d = await res.json();
+      setPlan(d.plan ?? d.error ?? "No plan generated.");
+      setGenerated(true);
+    } catch {
+      setPlan("Could not connect to AI. Check your OpenAI key.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ display:"flex",flexDirection:"column",gap:14 }} className="fade-up">
+      {/* Header */}
+      <div style={{ display:"flex",alignItems:"center",gap:1,background:"var(--border)",borderRadius:8,overflow:"hidden" }}>
+        <div style={{ background:"var(--surface)",padding:"12px 18px",flex:1 }}>
+          <p style={{ fontSize:10,color:"var(--text-subtle)",letterSpacing:"0.16em",textTransform:"uppercase",marginBottom:3,fontFamily:"var(--font-mono)" }}>Intelligence</p>
+          <p style={{ fontSize:18,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)",lineHeight:1 }}>Training Plan Generator</p>
+        </div>
+        {[
+          {label:"CTL",   value:`${tm.ctl} pts`, accent:"var(--gold)"},
+          {label:"Form",  value:`${tm.tsb>0?"+":""}${tm.tsb}`, accent:tm.tsb>0?"var(--olive)":tm.tsb<-20?"var(--terra)":"var(--text-muted)"},
+          ...(weeksLeft?[{label:"Weeks out", value:String(weeksLeft), accent:"var(--terra)"}]:[]),
+        ].map((m,i)=>(
+          <div key={i} style={{ background:"var(--surface)",padding:"12px 18px",position:"relative",borderLeft:"1px solid var(--border)" }}>
+            <div style={{ position:"absolute",top:0,left:0,right:0,height:2,background:m.accent }} />
+            <p style={{ fontSize:10,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4,fontFamily:"var(--font-mono)" }}>{m.label}</p>
+            <p style={{ fontSize:18,fontWeight:300,fontFamily:"var(--font-display)",color:"var(--text)",lineHeight:1 }}>{m.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Config */}
+      <Card p={18}>
+        <SectionTitle mono sub="Customise your plan parameters">Plan Setup</SectionTitle>
+        <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:14 }}>
+          {/* Goal info */}
+          <div style={{ display:"flex",flexDirection:"column",gap:6 }}>
+            <p style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>Goal Race</p>
+            {goal ? (
+              <div style={{ padding:"10px 14px",background:"var(--bg)",border:"1px solid var(--gold)30",borderRadius:6 }}>
+                <p style={{ fontSize:14,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)" }}>{goal.name}</p>
+                <p style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)",marginTop:2 }}>{goal.distance} · {goal.date}{goal.targetTime?` · target ${goal.targetTime}`:""}</p>
+                {daysLeft && <p style={{ fontSize:10,color:daysLeft<42?"var(--terra)":"var(--olive)",fontFamily:"var(--font-mono)",marginTop:4 }}>{daysLeft} days out</p>}
+              </div>
+            ) : (
+              <div style={{ padding:"10px 14px",background:"var(--bg)",border:"1px dashed var(--border-hi)",borderRadius:6 }}>
+                <p style={{ fontSize:11,color:"var(--text-subtle)",fontFamily:"var(--font-mono)" }}>No goal set — set one in Races for a targeted plan</p>
+              </div>
+            )}
+          </div>
+
+          {/* Weeks */}
+          <div style={{ display:"flex",flexDirection:"column",gap:6 }}>
+            <p style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>Plan Duration</p>
+            <div style={{ display:"flex",gap:4,flexWrap:"wrap" }}>
+              {[4,8,12,16,20,24].map(w=>(
+                <button key={w} onClick={()=>setWeeks(w)} style={{ padding:"5px 12px",borderRadius:4,border:`1px solid ${weeks===w?"var(--gold)":"var(--border)"}`,background:weeks===w?"var(--gold-dim)":"transparent",color:weeks===w?"var(--gold)":"var(--text-muted)",fontSize:11,fontFamily:"var(--font-mono)",cursor:"pointer" }}>
+                  {w}w
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Focus */}
+          <div style={{ display:"flex",flexDirection:"column",gap:6 }}>
+            <p style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>Training Focus</p>
+            <div style={{ display:"flex",gap:4,flexWrap:"wrap" }}>
+              {(["auto","base","build","peak"] as const).map(f=>(
+                <button key={f} onClick={()=>setFocus(f)} style={{ padding:"5px 12px",borderRadius:4,border:`1px solid ${focus===f?"var(--gold)":"var(--border)"}`,background:focus===f?"var(--gold-dim)":"transparent",color:focus===f?"var(--gold)":"var(--text-muted)",fontSize:11,fontFamily:"var(--font-mono)",cursor:"pointer",textTransform:"capitalize" }}>
+                  {f}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Current fitness */}
+          <div style={{ display:"flex",flexDirection:"column",gap:6 }}>
+            <p style={{ fontSize:10,color:"var(--text-muted)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em" }}>Current Fitness</p>
+            <div style={{ padding:"10px 14px",background:"var(--bg)",border:"1px solid var(--border)",borderRadius:6 }}>
+              <div style={{ display:"flex",gap:16 }}>
+                {[
+                  {l:"CTL",v:tm.ctl,c:"var(--gold)"},
+                  {l:"ATL",v:tm.atl,c:"var(--terra)"},
+                  {l:"TSB",v:tm.tsb,c:tm.tsb>0?"var(--olive)":"var(--terra)"},
+                ].map(x=>(
+                  <div key={x.l}>
+                    <p style={{ fontSize:9,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:1 }}>{x.l}</p>
+                    <p style={{ fontSize:15,fontWeight:300,fontFamily:"var(--font-display)",color:x.c,lineHeight:1 }}>{x.v>0?"+":""}{x.v}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ marginTop:16 }}>
+          <Btn onClick={generate} disabled={loading}>
+            {loading ? "Generating plan…" : generated ? "Regenerate Plan" : "Generate Training Plan"}
+          </Btn>
+        </div>
+      </Card>
+
+      {/* Plan output */}
+      {loading && (
+        <Card p={24}>
+          <div style={{ display:"flex",flexDirection:"column",gap:10 }}>
+            {[100,80,90,70,85].map((w,i)=>(
+              <div key={i} className="skeleton" style={{ height:16,borderRadius:4,width:`${w}%` }} />
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {plan && !loading && (
+        <Card p={20}>
+          <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16 }}>
+            <SectionTitle mono sub={`${weeks}-week · ${focus} phase · CTL ${tm.ctl}`}>Your Training Plan</SectionTitle>
+            <button onClick={()=>{const b=new Blob([plan],{type:"text/plain"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`olympeaks-plan-${new Date().toISOString().split("T")[0]}.txt`;a.click();}} style={{ fontSize:10,color:"var(--text-muted)",background:"none",border:"1px solid var(--border)",borderRadius:4,padding:"4px 10px",cursor:"pointer",fontFamily:"var(--font-mono)" }}>
+              Export .txt
+            </button>
+          </div>
+          <Markdown text={plan} size={13} />
+        </Card>
+      )}
     </div>
   );
 }
