@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 
 // ─── MARKDOWN RENDERER ───────────────────────────────────────────────────────
 // Lightweight — no deps. Handles: **bold**, *italic*, `code`, # headers,
@@ -1835,7 +1836,7 @@ function CoachPage({ activities, metrics, wellnessHistory, onLogWellness }: { ac
       <PageHeader supra="Intelligence" title="AI Coach" />
 
       {/* Top strip: recovery score + wellness stats inline */}
-      <div style={{ display:"grid",gridTemplateColumns:"auto 1fr auto",gap:1,background:"var(--border)",borderRadius:8,overflow:"hidden" }}>
+      <div style={{ display:"grid",gridTemplateColumns:mob?"1fr":"auto 1fr auto",gap:1,background:"var(--border)",borderRadius:8,overflow:"hidden" }}>
         {/* Score */}
         <div style={{ background:"var(--surface)",padding:"14px 20px",display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center",minWidth:80 }}>
           <div style={{ display:"flex",alignItems:"center",gap:4,marginBottom:4 }}>
@@ -1846,7 +1847,7 @@ function CoachPage({ activities, metrics, wellnessHistory, onLogWellness }: { ac
           {rc&&<span style={{ fontSize:8,color:rcColor,fontFamily:"var(--font-mono)",marginTop:2 }}>{rc>=70?"READY":rc>=50?"CAREFUL":"REST"}</span>}
         </div>
         {/* Wellness inline stats */}
-        <div style={{ background:"var(--surface)",padding:"10px 16px",display:"flex",alignItems:"center",flexWrap:"wrap",gap:0 }}>
+        <div style={{ background:"var(--surface)",padding:mob?"8px 10px":"10px 16px",display:"flex",alignItems:"center",flexWrap:"wrap",gap:0 }}>
           {metrics?[
             {l:"HRV",v:metrics.hrv_ms?`${metrics.hrv_ms}ms`:null,good:metrics.hrv_ms?metrics.hrv_ms>=60:null},
             {l:"Sleep",v:metrics.sleep_hours?`${metrics.sleep_hours}h`:null,good:metrics.sleep_hours?metrics.sleep_hours>=7.5:null},
@@ -1869,7 +1870,7 @@ function CoachPage({ activities, metrics, wellnessHistory, onLogWellness }: { ac
       </div>
 
       {/* Main area */}
-      <div style={{ display:"grid",gridTemplateColumns:"1fr 220px",gap:14,alignItems:"start" }}>
+      <div style={{ display:"grid",gridTemplateColumns:mob?"1fr":"1fr 220px",gap:14,alignItems:"start" }}>
         <div style={{ display:"flex",flexDirection:"column",gap:12 }}>
           <Card p={16}>
             <p style={{ fontSize:11,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"var(--font-mono)",marginBottom:10 }}>Additional context for AI</p>
@@ -2414,6 +2415,298 @@ function ActivitiesPage({ activities, profile, onRefresh }: { activities:Activit
 }
 
 // ─── PROFILE ─────────────────────────────────────────────────────────────────
+
+// ── Greek deity avatar presets ───────────────────────────────────────────────
+const GREEK_AVATARS: { id: string; name: string; epithet: string; svg: string }[] = [
+  {
+    id: "zeus",
+    name: "Zeus",
+    epithet: "King of Olympus",
+    svg: `<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="40" cy="40" r="40" fill="#1C1C19"/>
+      <!-- Crown rays -->
+      <line x1="40" y1="4" x2="40" y2="12" stroke="#C8A84E" stroke-width="1.5" opacity="0.7"/>
+      <line x1="52" y1="7" x2="48" y2="14" stroke="#C8A84E" stroke-width="1.5" opacity="0.5"/>
+      <line x1="28" y1="7" x2="32" y2="14" stroke="#C8A84E" stroke-width="1.5" opacity="0.5"/>
+      <line x1="62" y1="16" x2="56" y2="20" stroke="#C8A84E" stroke-width="1" opacity="0.35"/>
+      <line x1="18" y1="16" x2="24" y2="20" stroke="#C8A84E" stroke-width="1" opacity="0.35"/>
+      <!-- Face shape -->
+      <ellipse cx="40" cy="38" rx="16" ry="19" fill="#2A2820"/>
+      <ellipse cx="40" cy="38" rx="16" ry="19" fill="none" stroke="#C8A84E" stroke-width="0.8" opacity="0.4"/>
+      <!-- Beard -->
+      <path d="M26 46 Q28 58 40 62 Q52 58 54 46" fill="#1A1A16" opacity="0.9"/>
+      <path d="M26 46 Q28 58 40 62 Q52 58 54 46" fill="none" stroke="#C8A84E" stroke-width="0.6" opacity="0.3"/>
+      <!-- Hair waves -->
+      <path d="M24 28 Q26 22 32 22 Q30 18 34 17" stroke="#C8A84E" stroke-width="1" fill="none" opacity="0.5"/>
+      <path d="M56 28 Q54 22 48 22 Q50 18 46 17" stroke="#C8A84E" stroke-width="1" fill="none" opacity="0.5"/>
+      <!-- Eyes -->
+      <ellipse cx="34" cy="36" rx="2.5" ry="2" fill="#C8A84E" opacity="0.85"/>
+      <ellipse cx="46" cy="36" rx="2.5" ry="2" fill="#C8A84E" opacity="0.85"/>
+      <!-- Nose bridge -->
+      <line x1="40" y1="38" x2="40" y2="44" stroke="#C8A84E" stroke-width="0.8" opacity="0.3"/>
+      <!-- Lightning bolt emblem -->
+      <path d="M37 68 L41 63 L39 66 L43 61" stroke="#C8A84E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+    </svg>`,
+  },
+  {
+    id: "athena",
+    name: "Athena",
+    epithet: "Goddess of Wisdom",
+    svg: `<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="40" cy="40" r="40" fill="#1C1C19"/>
+      <!-- Helmet crest -->
+      <path d="M28 22 Q32 12 40 10 Q48 12 52 22" fill="#2A2820" stroke="#C8A84E" stroke-width="0.8" opacity="0.6"/>
+      <path d="M36 10 Q40 6 44 10" fill="none" stroke="#C8A84E" stroke-width="1.5" opacity="0.7"/>
+      <!-- Helmet sides -->
+      <path d="M26 30 Q24 26 26 22 Q28 18 32 18" fill="#242420" stroke="#C8A84E" stroke-width="0.7" opacity="0.5"/>
+      <path d="M54 30 Q56 26 54 22 Q52 18 48 18" fill="#242420" stroke="#C8A84E" stroke-width="0.7" opacity="0.5"/>
+      <!-- Face -->
+      <ellipse cx="40" cy="40" rx="14" ry="17" fill="#2A2820"/>
+      <ellipse cx="40" cy="40" rx="14" ry="17" fill="none" stroke="#C8A84E" stroke-width="0.8" opacity="0.35"/>
+      <!-- Eyes — wide and steady -->
+      <ellipse cx="34" cy="37" rx="3" ry="2.2" fill="none" stroke="#C8A84E" stroke-width="1" opacity="0.8"/>
+      <ellipse cx="46" cy="37" rx="3" ry="2.2" fill="none" stroke="#C8A84E" stroke-width="1" opacity="0.8"/>
+      <circle cx="34" cy="37" r="1.2" fill="#C8A84E" opacity="0.9"/>
+      <circle cx="46" cy="37" r="1.2" fill="#C8A84E" opacity="0.9"/>
+      <!-- Nose -->
+      <path d="M40 40 L38 45 L40 46 L42 45 L40 40" stroke="#C8A84E" stroke-width="0.7" fill="none" opacity="0.3"/>
+      <!-- Lips -->
+      <path d="M36 49 Q40 51 44 49" stroke="#C8A84E" stroke-width="0.8" fill="none" opacity="0.4"/>
+      <!-- Owl emblem -->
+      <circle cx="40" cy="68" r="4" fill="none" stroke="#C8A84E" stroke-width="0.8" opacity="0.6"/>
+      <circle cx="38.5" cy="67" r="1" fill="#C8A84E" opacity="0.7"/>
+      <circle cx="41.5" cy="67" r="1" fill="#C8A84E" opacity="0.7"/>
+      <path d="M39 70 L40 71 L41 70" stroke="#C8A84E" stroke-width="0.7" opacity="0.5"/>
+    </svg>`,
+  },
+  {
+    id: "apollo",
+    name: "Apollo",
+    epithet: "God of the Sun",
+    svg: `<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="40" cy="40" r="40" fill="#1C1C19"/>
+      <!-- Sun rays -->
+      <circle cx="40" cy="40" r="38" fill="none" stroke="#C8A84E" stroke-width="0.4" opacity="0.15" stroke-dasharray="2 4"/>
+      <line x1="40" y1="2" x2="40" y2="8" stroke="#C8A84E" stroke-width="1" opacity="0.6"/>
+      <line x1="58" y1="8" x2="54" y2="13" stroke="#C8A84E" stroke-width="1" opacity="0.5"/>
+      <line x1="72" y1="22" x2="67" y2="25" stroke="#C8A84E" stroke-width="1" opacity="0.4"/>
+      <line x1="22" y1="8" x2="26" y2="13" stroke="#C8A84E" stroke-width="1" opacity="0.5"/>
+      <line x1="8" y1="22" x2="13" y2="25" stroke="#C8A84E" stroke-width="1" opacity="0.4"/>
+      <line x1="78" y1="40" x2="72" y2="40" stroke="#C8A84E" stroke-width="1" opacity="0.35"/>
+      <line x1="2" y1="40" x2="8" y2="40" stroke="#C8A84E" stroke-width="1" opacity="0.35"/>
+      <!-- Laurel wreath -->
+      <path d="M24 30 Q22 24 26 20 Q30 24 28 30" fill="#2A3020" stroke="#748A52" stroke-width="0.7" opacity="0.7"/>
+      <path d="M56 30 Q58 24 54 20 Q50 24 52 30" fill="#2A3020" stroke="#748A52" stroke-width="0.7" opacity="0.7"/>
+      <path d="M30 22 Q34 18 40 17 Q46 18 50 22" fill="none" stroke="#748A52" stroke-width="0.8" opacity="0.6"/>
+      <!-- Face — youthful, clean -->
+      <ellipse cx="40" cy="40" rx="13" ry="16" fill="#2A2820"/>
+      <!-- Eyes -->
+      <path d="M32 36 Q34 34 36 36" stroke="#C8A84E" stroke-width="1" fill="none" opacity="0.7"/>
+      <path d="M44 36 Q46 34 48 36" stroke="#C8A84E" stroke-width="1" fill="none" opacity="0.7"/>
+      <circle cx="34" cy="36.5" r="1.3" fill="#C8A84E" opacity="0.85"/>
+      <circle cx="46" cy="36.5" r="1.3" fill="#C8A84E" opacity="0.85"/>
+      <!-- Nose, lips -->
+      <line x1="40" y1="39" x2="40" y2="44" stroke="#C8A84E" stroke-width="0.7" opacity="0.25"/>
+      <path d="M36 47 Q40 50 44 47" stroke="#C8A84E" stroke-width="1" fill="none" opacity="0.45"/>
+      <!-- Lyre emblem -->
+      <path d="M36 68 L36 62 Q40 60 44 62 L44 68" stroke="#C8A84E" stroke-width="1" fill="none" opacity="0.65"/>
+      <line x1="38" y1="62" x2="38" y2="68" stroke="#C8A84E" stroke-width="0.7" opacity="0.5"/>
+      <line x1="40" y1="61" x2="40" y2="68" stroke="#C8A84E" stroke-width="0.7" opacity="0.5"/>
+      <line x1="42" y1="62" x2="42" y2="68" stroke="#C8A84E" stroke-width="0.7" opacity="0.5"/>
+    </svg>`,
+  },
+  {
+    id: "hermes",
+    name: "Hermes",
+    epithet: "Messenger of Gods",
+    svg: `<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="40" cy="40" r="40" fill="#1C1C19"/>
+      <!-- Winged helmet -->
+      <ellipse cx="40" cy="26" rx="15" ry="8" fill="#242420" stroke="#C8A84E" stroke-width="0.7" opacity="0.5"/>
+      <!-- Left wing -->
+      <path d="M25 26 Q18 20 16 14 Q20 18 22 22 Q19 16 22 12 Q24 18 25 22" fill="#2A2820" stroke="#C8A84E" stroke-width="0.7" opacity="0.6"/>
+      <!-- Right wing -->
+      <path d="M55 26 Q62 20 64 14 Q60 18 58 22 Q61 16 58 12 Q56 18 55 22" fill="#2A2820" stroke="#C8A84E" stroke-width="0.7" opacity="0.6"/>
+      <!-- Face — angular, quick -->
+      <ellipse cx="40" cy="42" rx="13" ry="16" fill="#2A2820"/>
+      <ellipse cx="40" cy="42" rx="13" ry="16" fill="none" stroke="#C8A84E" stroke-width="0.7" opacity="0.3"/>
+      <!-- Sharp eyes -->
+      <path d="M31 38 L33 36 L36 38 L33 39 Z" fill="#C8A84E" opacity="0.8"/>
+      <path d="M44 38 L46 36 L49 38 L46 39 Z" fill="#C8A84E" opacity="0.8"/>
+      <!-- Nose -->
+      <path d="M40 41 Q38 44 39 46 Q40 47 41 46 Q42 44 40 41" stroke="#C8A84E" stroke-width="0.7" fill="none" opacity="0.3"/>
+      <!-- Smirk -->
+      <path d="M36 50 Q40 52 43 50" stroke="#C8A84E" stroke-width="0.9" fill="none" opacity="0.5"/>
+      <!-- Caduceus emblem -->
+      <line x1="40" y1="60" x2="40" y2="74" stroke="#C8A84E" stroke-width="1" opacity="0.6"/>
+      <path d="M37 63 Q34 66 37 69 Q40 66 43 69 Q46 66 43 63" stroke="#C8A84E" stroke-width="0.8" fill="none" opacity="0.6"/>
+      <line x1="36" y1="61" x2="44" y2="61" stroke="#C8A84E" stroke-width="0.8" opacity="0.4"/>
+    </svg>`,
+  },
+  {
+    id: "artemis",
+    name: "Artemis",
+    epithet: "Goddess of the Hunt",
+    svg: `<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="40" cy="40" r="40" fill="#1C1C19"/>
+      <!-- Crescent moon crown -->
+      <path d="M28 18 Q34 10 46 14 Q38 12 32 18" fill="#C8A84E" opacity="0.7"/>
+      <path d="M28 18 Q34 10 46 14 Q38 12 32 18" fill="none" stroke="#C8A84E" stroke-width="0.5"/>
+      <!-- Stars -->
+      <circle cx="54" cy="16" r="1.2" fill="#C8A84E" opacity="0.6"/>
+      <circle cx="24" cy="22" r="0.9" fill="#C8A84E" opacity="0.5"/>
+      <circle cx="58" cy="28" r="0.8" fill="#C8A84E" opacity="0.4"/>
+      <circle cx="60" cy="20" r="1" fill="#C8A84E" opacity="0.45"/>
+      <!-- Hair flowing -->
+      <path d="M27 32 Q22 28 24 20 Q28 16 32 18" fill="#1A1A16" stroke="#C8A84E" stroke-width="0.6" opacity="0.4"/>
+      <path d="M53 32 Q58 36 60 46 Q58 54 54 58" fill="#1A1A16" stroke="#C8A84E" stroke-width="0.6" opacity="0.3"/>
+      <!-- Face — determined -->
+      <ellipse cx="40" cy="40" rx="13" ry="16" fill="#2A2820"/>
+      <!-- Eyes — focused -->
+      <ellipse cx="34" cy="37" rx="2.8" ry="1.8" fill="none" stroke="#C8A84E" stroke-width="0.9" opacity="0.75"/>
+      <ellipse cx="46" cy="37" rx="2.8" ry="1.8" fill="none" stroke="#C8A84E" stroke-width="0.9" opacity="0.75"/>
+      <circle cx="34" cy="37" r="1.1" fill="#C8A84E" opacity="0.9"/>
+      <circle cx="46" cy="37" r="1.1" fill="#C8A84E" opacity="0.9"/>
+      <!-- Nose, lips -->
+      <path d="M38 41 Q40 44 42 41" stroke="#C8A84E" stroke-width="0.7" fill="none" opacity="0.3"/>
+      <path d="M36 48 Q40 50 44 48" stroke="#C8A84E" stroke-width="0.9" fill="none" opacity="0.4"/>
+      <!-- Arrow emblem -->
+      <line x1="32" y1="70" x2="48" y2="63" stroke="#C8A84E" stroke-width="1" opacity="0.65"/>
+      <path d="M46 62 L50 62 L47 65" fill="#C8A84E" opacity="0.65"/>
+      <line x1="32" y1="70" x2="30" y2="72" stroke="#C8A84E" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+    </svg>`,
+  },
+  {
+    id: "ares",
+    name: "Ares",
+    epithet: "God of War",
+    svg: `<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="40" cy="40" r="40" fill="#1C1C19"/>
+      <!-- War helmet — full -->
+      <path d="M24 36 Q24 18 40 16 Q56 18 56 36" fill="#221E1A" stroke="#C47848" stroke-width="1" opacity="0.7"/>
+      <!-- Crest -->
+      <path d="M36 16 Q40 8 44 16" fill="#C47848" opacity="0.6"/>
+      <path d="M38 16 Q40 10 42 16" fill="#C47848" opacity="0.8"/>
+      <!-- Cheek guards -->
+      <path d="M24 36 Q22 42 25 48 Q28 44 28 38" fill="#221E1A" stroke="#C47848" stroke-width="0.7" opacity="0.5"/>
+      <path d="M56 36 Q58 42 55 48 Q52 44 52 38" fill="#221E1A" stroke="#C47848" stroke-width="0.7" opacity="0.5"/>
+      <!-- Eye slot -->
+      <path d="M28 34 L52 34" stroke="#C47848" stroke-width="0.5" opacity="0.4"/>
+      <!-- Eyes through visor -->
+      <rect x="31" y="31" width="6" height="4" rx="1" fill="#1A1A16"/>
+      <rect x="43" y="31" width="6" height="4" rx="1" fill="#1A1A16"/>
+      <ellipse cx="34" cy="33" rx="2" ry="1.5" fill="#C47848" opacity="0.85"/>
+      <ellipse cx="46" cy="33" rx="2" ry="1.5" fill="#C47848" opacity="0.85"/>
+      <!-- Jaw -->
+      <path d="M30 46 Q30 56 40 60 Q50 56 50 46" fill="#2A2820" stroke="#C47848" stroke-width="0.6" opacity="0.4"/>
+      <!-- Spear + shield emblem -->
+      <circle cx="40" cy="70" r="5" fill="none" stroke="#C47848" stroke-width="1" opacity="0.6"/>
+      <line x1="40" y1="62" x2="40" y2="78" stroke="#C47848" stroke-width="1.2" opacity="0.65"/>
+      <path d="M40 60 L38 64 L40 63 L42 64 Z" fill="#C47848" opacity="0.7"/>
+    </svg>`,
+  },
+  {
+    id: "poseidon",
+    name: "Poseidon",
+    epithet: "God of the Sea",
+    svg: `<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="40" cy="40" r="40" fill="#1C1C19"/>
+      <!-- Wave bg -->
+      <path d="M0 55 Q10 50 20 55 Q30 60 40 55 Q50 50 60 55 Q70 60 80 55 L80 80 L0 80 Z" fill="#1A2228" opacity="0.5"/>
+      <!-- Trident crown -->
+      <line x1="40" y1="6" x2="40" y2="22" stroke="#C8A84E" stroke-width="1.5" opacity="0.7"/>
+      <line x1="34" y1="10" x2="34" y2="18" stroke="#C8A84E" stroke-width="1" opacity="0.6"/>
+      <line x1="46" y1="10" x2="46" y2="18" stroke="#C8A84E" stroke-width="1" opacity="0.6"/>
+      <path d="M33 10 L34 7 L35 10" fill="#C8A84E" opacity="0.7"/>
+      <path d="M39 6 L40 3 L41 6" fill="#C8A84E" opacity="0.8"/>
+      <path d="M45 10 L46 7 L47 10" fill="#C8A84E" opacity="0.7"/>
+      <!-- Face — weathered, powerful -->
+      <ellipse cx="40" cy="40" rx="15" ry="18" fill="#222A30"/>
+      <ellipse cx="40" cy="40" rx="15" ry="18" fill="none" stroke="#C8A84E" stroke-width="0.7" opacity="0.3"/>
+      <!-- Sea-weathered beard -->
+      <path d="M26 46 Q28 60 40 65 Q52 60 54 46" fill="#1A2228" opacity="0.9"/>
+      <path d="M28 50 Q30 58 40 62" stroke="#C8A84E" stroke-width="0.6" fill="none" opacity="0.25"/>
+      <path d="M52 50 Q50 58 40 62" stroke="#C8A84E" stroke-width="0.6" fill="none" opacity="0.25"/>
+      <!-- Eyes — deep -->
+      <ellipse cx="34" cy="37" rx="3" ry="2" fill="#1A2228"/>
+      <ellipse cx="46" cy="37" rx="3" ry="2" fill="#1A2228"/>
+      <circle cx="34" cy="37" r="1.5" fill="#C8A84E" opacity="0.7"/>
+      <circle cx="46" cy="37" r="1.5" fill="#C8A84E" opacity="0.7"/>
+      <!-- Brow wrinkle -->
+      <path d="M31 34 Q34 32 37 34" stroke="#C8A84E" stroke-width="0.7" fill="none" opacity="0.3"/>
+      <path d="M43 34 Q46 32 49 34" stroke="#C8A84E" stroke-width="0.7" fill="none" opacity="0.3"/>
+    </svg>`,
+  },
+  {
+    id: "nike",
+    name: "Nike",
+    epithet: "Goddess of Victory",
+    svg: `<svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="40" cy="40" r="40" fill="#1C1C19"/>
+      <!-- Wings -->
+      <path d="M10 38 Q6 30 14 22 Q18 30 22 36" fill="#2A3020" stroke="#748A52" stroke-width="0.8" opacity="0.7"/>
+      <path d="M10 38 Q4 36 8 28 Q14 32 18 38" fill="#2A3020" stroke="#748A52" stroke-width="0.6" opacity="0.5"/>
+      <path d="M70 38 Q74 30 66 22 Q62 30 58 36" fill="#2A3020" stroke="#748A52" stroke-width="0.8" opacity="0.7"/>
+      <path d="M70 38 Q76 36 72 28 Q66 32 62 38" fill="#2A3020" stroke="#748A52" stroke-width="0.6" opacity="0.5"/>
+      <!-- Flowing hair upward -->
+      <path d="M28 28 Q30 18 36 16 Q34 12 38 10" stroke="#C8A84E" stroke-width="1" fill="none" opacity="0.45"/>
+      <path d="M52 28 Q50 20 46 17 Q48 13 44 11" stroke="#C8A84E" stroke-width="0.8" fill="none" opacity="0.35"/>
+      <!-- Face — triumphant -->
+      <ellipse cx="40" cy="40" rx="13" ry="15" fill="#2A2820"/>
+      <!-- Eyes — bright, forward -->
+      <ellipse cx="34.5" cy="37" rx="2.8" ry="2" fill="none" stroke="#C8A84E" stroke-width="1" opacity="0.8"/>
+      <ellipse cx="45.5" cy="37" rx="2.8" ry="2" fill="none" stroke="#C8A84E" stroke-width="1" opacity="0.8"/>
+      <circle cx="34.5" cy="37" r="1.2" fill="#C8A84E" opacity="0.95"/>
+      <circle cx="45.5" cy="37" r="1.2" fill="#C8A84E" opacity="0.95"/>
+      <!-- Smile of victory -->
+      <path d="M35 48 Q40 52 45 48" stroke="#C8A84E" stroke-width="1.2" fill="none" opacity="0.6"/>
+      <!-- Wreath -->
+      <path d="M30 30 Q34 24 40 23 Q46 24 50 30" fill="none" stroke="#748A52" stroke-width="1" opacity="0.6" stroke-dasharray="2 2"/>
+      <!-- Laurel leaf accents -->
+      <path d="M32 27 Q30 23 34 22 Q35 26 32 27" fill="#2A3020" stroke="#748A52" stroke-width="0.6" opacity="0.7"/>
+      <path d="M48 27 Q50 23 46 22 Q45 26 48 27" fill="#2A3020" stroke="#748A52" stroke-width="0.6" opacity="0.7"/>
+      <!-- Winged sandal emblem -->
+      <path d="M34 70 Q37 68 40 70 Q43 68 46 70" stroke="#C8A84E" stroke-width="1" fill="none" opacity="0.6"/>
+      <path d="M36 68 Q34 65 36 63 Q38 65 36 68" fill="#2A3020" stroke="#C8A84E" stroke-width="0.6" opacity="0.5"/>
+      <path d="M44 68 Q46 65 44 63 Q42 65 44 68" fill="#2A3020" stroke="#C8A84E" stroke-width="0.6" opacity="0.5"/>
+    </svg>`,
+  },
+];
+
+function AvatarPresetPicker({ current, onSelect }: { current: string; onSelect: (id: string) => void }) {
+  return (
+    <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10 }}>
+      {GREEK_AVATARS.map(av => (
+        <button key={av.id} onClick={() => onSelect(av.id)}
+          title={`${av.name} — ${av.epithet}`}
+          style={{
+            display:"flex", flexDirection:"column", alignItems:"center", gap:5,
+            padding:"10px 6px", borderRadius:10,
+            border: current === av.id ? "1px solid var(--gold)" : "1px solid var(--border)",
+            background: current === av.id ? "var(--gold-dim)" : "var(--surface-hi)",
+            cursor:"pointer", WebkitTapHighlightColor:"transparent",
+            transition:"all 0.15s",
+          }}>
+          <div style={{ width:44, height:44, borderRadius:"50%", overflow:"hidden", flexShrink:0 }}
+            dangerouslySetInnerHTML={{ __html: av.svg }} />
+          <span style={{ fontSize:9, fontFamily:"var(--font-mono)", color: current===av.id?"var(--gold)":"var(--text-muted)", letterSpacing:"0.06em", textAlign:"center", lineHeight:1.2 }}>
+            {av.name}
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function GreekAvatar({ id, size = 52 }: { id?: string | null; size?: number }) {
+  const av = GREEK_AVATARS.find(a => a.id === id);
+  if (!av) return null;
+  return (
+    <div style={{ width:size, height:size, borderRadius:"50%", overflow:"hidden", flexShrink:0 }}
+      dangerouslySetInnerHTML={{ __html: av.svg }} />
+  );
+}
+
 // Extracted from ProfilePage — must be outside to avoid focus-loss bug
 function ProfileRow({ label, hint, children }: { label:string; hint?:string; children:React.ReactNode }) {
   return (
@@ -2429,6 +2722,8 @@ function ProfileRow({ label, hint, children }: { label:string; hint?:string; chi
 
 function ProfilePage({ profile, onSaved }: { profile:Profile|null; onSaved:()=>void }) {
   const mob = useIsMobile();
+  const [avatar,setAvatar]=useState<string>(profile?.avatar_id??"zeus");
+  const [avatarPickerOpen,setAvatarPickerOpen]=useState(false);
   const [f,setF]=useState({
     full_name: profile?.full_name??"",
     sport:     profile?.sport??"running",
@@ -2448,6 +2743,7 @@ function ProfilePage({ profile, onSaved }: { profile:Profile|null; onSaved:()=>v
     try {
       const res=await fetch("/api/profile",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({
         ...f,
+        avatar_id: avatar,
         weight_kg: f.weight_kg?parseFloat(f.weight_kg):null,
         height_cm: f.height_cm?parseFloat(f.height_cm):null,
         ftp_watts: f.ftp_watts?parseInt(f.ftp_watts):null,
@@ -2528,8 +2824,24 @@ function ProfilePage({ profile, onSaved }: { profile:Profile|null; onSaved:()=>v
       {/* ── Hero card ── */}
       <Card p={16}>
         <div style={{ display:"flex",alignItems:"center",gap:14 }}>
-          <div style={{ width:52,height:52,borderRadius:"50%",background:"var(--gold-dim)",border:"2px solid var(--gold)30",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
-            <span style={{ fontSize:18,fontWeight:300,color:"var(--gold)",fontFamily:"var(--font-display)",lineHeight:1 }}>{initials}</span>
+          <div style={{ position:"relative", flexShrink:0 }}>
+            {GREEK_AVATARS.find(a=>a.id===avatar) ? (
+              <div style={{ width:56,height:56,borderRadius:"50%",overflow:"hidden",border:"2px solid var(--gold)",boxShadow:"0 0 0 2px var(--gold-dim)" }}>
+                <GreekAvatar id={avatar} size={56} />
+              </div>
+            ) : (
+              <div style={{ width:56,height:56,borderRadius:"50%",background:"var(--gold-dim)",border:"2px solid var(--gold)",display:"flex",alignItems:"center",justifyContent:"center" }}>
+                <span style={{ fontSize:18,fontWeight:300,color:"var(--gold)",fontFamily:"var(--font-display)",lineHeight:1 }}>{initials}</span>
+              </div>
+            )}
+            <button onClick={()=>setAvatarPickerOpen(o=>!o)}
+              title="Change avatar"
+              style={{ position:"absolute",bottom:-2,right:-2,width:20,height:20,borderRadius:"50%",background:"var(--surface)",border:"1px solid var(--border)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",WebkitTapHighlightColor:"transparent" }}>
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="var(--gold)" strokeWidth="1.2" strokeLinecap="round">
+                <path d="M1 7 L4 4 L7 7"/><line x1="4" y1="4" x2="4" y2="9"/>
+                <circle cx="7.5" cy="2.5" r="1.5" fill="var(--gold)" stroke="none"/>
+              </svg>
+            </button>
           </div>
           <div style={{ flex:1,minWidth:0 }}>
             <p style={{ fontSize:16,fontWeight:300,fontFamily:"var(--font-display)",fontStyle:"italic",color:"var(--text)",marginBottom:3,lineHeight:1.2 }}>{f.full_name||"Athlete"}</p>
@@ -2545,6 +2857,20 @@ function ProfilePage({ profile, onSaved }: { profile:Profile|null; onSaved:()=>v
           <Btn onClick={save} disabled={saving} style={{ flexShrink:0 }}>{saving?"Saving…":"Save"}</Btn>
         </div>
       </Card>
+
+      {/* ── Avatar picker ── */}
+      {avatarPickerOpen&&(
+        <Card p={16}>
+          <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14 }}>
+            <div>
+              <p style={{ fontSize:11,color:"var(--text-muted)",textTransform:"uppercase",letterSpacing:"0.12em",fontFamily:"var(--font-mono)" }}>Choose your deity</p>
+              <p style={{ fontSize:10,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",marginTop:3 }}>Your patron god of training</p>
+            </div>
+            <button onClick={()=>setAvatarPickerOpen(false)} style={{ background:"none",border:"none",cursor:"pointer",color:"var(--text-muted)",fontSize:16,padding:4 }}>✕</button>
+          </div>
+          <AvatarPresetPicker current={avatar} onSelect={(id)=>{ setAvatar(id); setAvatarPickerOpen(false); }} />
+        </Card>
+      )}
 
       {/* ── Main grid ── */}
       <div style={{ display:"grid",gridTemplateColumns:mob?"1fr":"1fr 1fr",gap:14,alignItems:"start" }}>
@@ -2921,60 +3247,163 @@ function useIsMobile() {
 
 function Sidebar({ active, onChange, profile, onSignOut, dark, onToggleTheme }: { active:PageId; onChange:(p:PageId)=>void; profile:Profile|null; onSignOut:()=>void; dark:boolean; onToggleTheme:()=>void }) {
   const mob = useIsMobile();
+  const [moreOpen, setMoreOpen] = useState(false); // must be top-level — Rules of Hooks
   const initials = profile?.full_name ? profile.full_name.split(" ").map(n=>n[0]).join("").slice(0,2).toUpperCase() : "AT";
 
-  // ── MOBILE: horizontal bottom tab bar ────────────────────────────────────
+  // ── MOBILE: smart bottom tab bar with "More" drawer ─────────────────────
   if (mob) {
-    const allTabs = [
-      ...NAV,
-      { id:"profile" as PageId, label:"Profile", Icon:({ size=20, active=false }: {size?:number;active?:boolean}) => (
-        <div style={{ width:size,height:size,borderRadius:"50%",background:active?"var(--gold)":"var(--border)",display:"flex",alignItems:"center",justifyContent:"center" }}>
-          <span style={{ fontSize:size*0.45,fontWeight:700,color:active?"#0A0A08":"var(--text-muted)",fontFamily:"var(--font-display)",lineHeight:1 }}>{initials}</span>
-        </div>
-      )},
+    // Primary tabs always visible — the 4 most used
+    const PRIMARY: PageId[] = ["dashboard","coach","activities","profile"];
+    // All others go into the More drawer
+    const MORE_TABS = [
+      ...NAV.filter(n => !PRIMARY.includes(n.id)),
+      { id:"sync" as PageId, label:"Sync", Icon:IconSync, sublabel:"Sync" },
+    ].filter((t,i,arr) => arr.findIndex(x=>x.id===t.id)===i);
+
+    const profileTab = {
+      id:"profile" as PageId,
+      label:"Profile",
+      Icon:({ size=20, active=false }: {size?:number;active?:boolean}) => {
+        const avatarId = profile?.avatar_id;
+        const hasAvatar = avatarId && GREEK_AVATARS.find(a=>a.id===avatarId);
+        return hasAvatar ? (
+          <div style={{ width:size,height:size,borderRadius:"50%",overflow:"hidden",border:active?"1.5px solid var(--gold)":"1.5px solid transparent" }}>
+            <GreekAvatar id={avatarId} size={size} />
+          </div>
+        ) : (
+          <div style={{ width:size,height:size,borderRadius:"50%",background:active?"var(--gold)":"var(--border)",display:"flex",alignItems:"center",justifyContent:"center" }}>
+            <span style={{ fontSize:size*0.45,fontWeight:700,color:active?"#0A0A08":"var(--text-muted)",fontFamily:"var(--font-display)",lineHeight:1 }}>{initials}</span>
+          </div>
+        );
+      }
+    };
+
+    const primaryTabs = [
+      ...NAV.filter(n => PRIMARY.slice(0,-1).includes(n.id)), // dashboard,coach,activities
+      profileTab,
     ];
-    return (
-      <aside style={{
-        position:"fixed", bottom:0, left:0, right:0, zIndex:200,
-        background:"var(--surface)",
-        borderTop:"1px solid var(--border)",
-        display:"flex", flexDirection:"column",
-      }}>
-        {/* Tab row */}
-        <div style={{ display:"flex", flexDirection:"row", alignItems:"stretch", height:54 }}>
-          {allTabs.map(({ id, label, Icon }) => {
-            const a = active === id;
-            return (
-              <button key={id} onClick={() => onChange(id)}
-                style={{
-                  flex:1, display:"flex", flexDirection:"column",
-                  alignItems:"center", justifyContent:"center",
-                  border:"none",
-                  borderTop: a ? "2px solid var(--gold)" : "2px solid transparent",
-                  background: a ? "var(--gold-dim)" : "transparent",
-                  color: a ? "var(--gold)" : "var(--text-muted)",
-                  cursor:"pointer", padding:0, gap:0,
-                  WebkitTapHighlightColor:"transparent",
-                }}>
-                <Icon size={20} active={a} />
-              </button>
-            );
-          })}
-          {/* Theme toggle */}
-          <button onClick={onToggleTheme} style={{
-            width:48, display:"flex", flexDirection:"column",
-            alignItems:"center", justifyContent:"center",
-            border:"none", borderTop:"2px solid transparent",
-            background:"transparent", color:"var(--text-muted)",
-            cursor:"pointer", padding:0, flexShrink:0,
+
+    const isMoreActive = MORE_TABS.some(t => t.id === active);
+
+    const navBtn = (id: PageId, label: string, Icon: ({size,active}:{size?:number;active?:boolean})=>React.ReactElement|null, extraStyle?: React.CSSProperties) => {
+      const a = active === id;
+      return (
+        <button key={id} onClick={() => { onChange(id); setMoreOpen(false); }}
+          style={{
+            flex:1, display:"flex", flexDirection:"column",
+            alignItems:"center", justifyContent:"center", gap:3,
+            border:"none",
+            borderTop: a ? "2px solid var(--gold)" : "2px solid transparent",
+            background: a ? "var(--gold-dim)" : "transparent",
+            color: a ? "var(--gold)" : "var(--text-muted)",
+            cursor:"pointer", padding:"8px 2px 0",
             WebkitTapHighlightColor:"transparent",
+            minWidth:0,
+            ...extraStyle,
           }}>
-            {dark ? <IconSun size={20} /> : <IconMoon size={20} />}
-          </button>
-        </div>
-        {/* iOS safe area spacer */}
-        <div style={{ height:"env(safe-area-inset-bottom,0px)", background:"var(--surface)" }} />
-      </aside>
+          <Icon size={20} active={a} />
+          <span style={{ fontSize:9,fontFamily:"var(--font-mono)",letterSpacing:"0.05em",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:"100%",paddingBottom:2 }}>
+            {label}
+          </span>
+        </button>
+      );
+    };
+
+    return (
+      <>
+        {/* More drawer — slides up */}
+        {moreOpen && (
+          <>
+            {/* Backdrop */}
+            <div onClick={()=>setMoreOpen(false)} style={{
+              position:"fixed",inset:0,zIndex:198,
+              background:"rgba(0,0,0,0.5)",
+              backdropFilter:"blur(2px)",
+            }} />
+            {/* Drawer */}
+            <div style={{
+              position:"fixed",bottom:54,left:0,right:0,zIndex:199,
+              background:"var(--surface)",
+              borderTop:"1px solid var(--border)",
+              borderRadius:"16px 16px 0 0",
+              padding:"16px 16px 8px",
+            }}>
+              {/* Handle */}
+              <div style={{ width:36,height:3,borderRadius:2,background:"var(--border-hi)",margin:"0 auto 16px" }} />
+              <p style={{ fontSize:9,color:"var(--text-subtle)",fontFamily:"var(--font-mono)",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:12 }}>More</p>
+              <div style={{ display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:4 }}>
+                {MORE_TABS.map(({ id, label, Icon }) => {
+                  const a = active === id;
+                  return (
+                    <button key={id} onClick={() => { onChange(id); setMoreOpen(false); }}
+                      style={{
+                        display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
+                        gap:6,padding:"14px 8px",
+                        background: a ? "var(--gold-dim)" : "var(--surface-hi)",
+                        border: a ? "1px solid var(--gold)" : "1px solid var(--border)",
+                        borderRadius:10,
+                        color: a ? "var(--gold)" : "var(--text-muted)",
+                        cursor:"pointer",
+                        WebkitTapHighlightColor:"transparent",
+                      }}>
+                      <Icon size={22} active={a} />
+                      <span style={{ fontSize:10,fontFamily:"var(--font-mono)",letterSpacing:"0.04em",color: a?"var(--gold)":"var(--text-muted)" }}>{label}</span>
+                    </button>
+                  );
+                })}
+                {/* Theme toggle in drawer */}
+                <button onClick={() => { onToggleTheme(); }}
+                  style={{
+                    display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
+                    gap:6,padding:"14px 8px",
+                    background:"var(--surface-hi)",
+                    border:"1px solid var(--border)",
+                    borderRadius:10,
+                    color:"var(--text-muted)",
+                    cursor:"pointer",
+                    WebkitTapHighlightColor:"transparent",
+                  }}>
+                  {dark ? <IconSun size={22} /> : <IconMoon size={22} />}
+                  <span style={{ fontSize:10,fontFamily:"var(--font-mono)",letterSpacing:"0.04em" }}>{dark?"Light":"Dark"}</span>
+                </button>
+              </div>
+              <div style={{ height:"env(safe-area-inset-bottom,0px)" }} />
+            </div>
+          </>
+        )}
+
+        {/* Bottom tab bar */}
+        <aside style={{
+          position:"fixed", bottom:0, left:0, right:0, zIndex:200,
+          background:"var(--surface)",
+          borderTop:"1px solid var(--border)",
+          display:"flex", flexDirection:"column",
+        }}>
+          <div style={{ display:"flex", flexDirection:"row", alignItems:"stretch", height:56 }}>
+            {primaryTabs.map(({ id, label, Icon }) => navBtn(id, label, Icon))}
+            {/* More button */}
+            <button onClick={()=>setMoreOpen(o=>!o)}
+              style={{
+                flex:1, display:"flex", flexDirection:"column",
+                alignItems:"center", justifyContent:"center", gap:3,
+                border:"none",
+                borderTop: (moreOpen||isMoreActive) ? "2px solid var(--gold)" : "2px solid transparent",
+                background: (moreOpen||isMoreActive) ? "var(--gold-dim)" : "transparent",
+                color: (moreOpen||isMoreActive) ? "var(--gold)" : "var(--text-muted)",
+                cursor:"pointer", padding:"8px 2px 0",
+                WebkitTapHighlightColor:"transparent",
+              }}>
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                <circle cx="4" cy="10" r="1.2" fill="currentColor" stroke="none"/>
+                <circle cx="10" cy="10" r="1.2" fill="currentColor" stroke="none"/>
+                <circle cx="16" cy="10" r="1.2" fill="currentColor" stroke="none"/>
+              </svg>
+              <span style={{ fontSize:9,fontFamily:"var(--font-mono)",letterSpacing:"0.05em",paddingBottom:2 }}>More</span>
+            </button>
+          </div>
+          <div style={{ height:"env(safe-area-inset-bottom,0px)", background:"var(--surface)" }} />
+        </aside>
+      </>
     );
   }
 

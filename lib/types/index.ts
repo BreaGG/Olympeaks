@@ -7,6 +7,7 @@ export interface Profile {
   id: string;
   full_name: string | null;
   avatar_url: string | null;
+  avatar_id: string | null;
   sport: Sport;
   weight_kg: number | null;
   height_cm: number | null;
